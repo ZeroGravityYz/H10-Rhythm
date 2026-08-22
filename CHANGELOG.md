@@ -1,5 +1,13 @@
 # Historique des versions
 
+## 2.6.1-test
+
+- correction de la lecture de batterie H10 : elle est désormais retardée, retentée automatiquement et vérifiée périodiquement sans bloquer le flux ECG ou le capteur de mouvement ;
+- nouvelle remise à zéro complète depuis Historique ou Réglages : rapports PDF, ECG bruts exportés, signal continu privé des dernières 24 h, passages et résumés de sessions ;
+- verrouillage du nettoyage avec les créations de rapports afin qu’un fichier en attente ne puisse pas réapparaître après la suppression ;
+- le profil morphologique personnel reste volontairement conservé lors du nettoyage de l’historique ;
+- hiérarchie visuelle renforcée : cartes en dégradé, indicateurs colorés, cœur d’état plus lisible, badge direct et zone de suppression clairement séparée.
+
 ## 2.6.0-test
 
 - activation du flux accéléromètre du Polar H10 à 50 Hz pour mettre en quarantaine les secousses réelles de la ceinture avant toute alerte cardiaque ;

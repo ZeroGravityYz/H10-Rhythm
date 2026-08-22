@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 public final class EventStore {
     public interface Listener { void onReportReady(String name, String location); void onStoreError(String message); }
     private static final int FS=EcgEngine.FS, PRE=60*FS, POST=30*FS, RING=5*60*FS;
+    private static final Object DATA_LOCK=new Object();
     private final Context context; private final Listener listener;
     private final int[] ringUv=new int[RING]; private final long[] ringMs=new long[RING]; private int ringPos,ringCount;
     private final ArrayList<Capture> captures=new ArrayList<>();
@@ -39,12 +40,18 @@ public final class EventStore {
     private final File continuousDir; private DataOutputStream chunk; private int chunkSamples; private long chunkStart;
 
     private static final class Capture {
-        final EcgEngine.DetectionEvent event; final String id; final ArrayList<Integer> uv=new ArrayList<>(); final ArrayList<Long> ms=new ArrayList<>();
+        final EcgEngine.DetectionEvent event; final String id;final long generation; final ArrayList<Integer> uv=new ArrayList<>(); final ArrayList<Long> ms=new ArrayList<>();
         int targetSamples;
-        Capture(EcgEngine.DetectionEvent event,String id){this.event=event;this.id=id;}
+        Capture(EcgEngine.DetectionEvent event,String id,long generation){this.event=event;this.id=id;this.generation=generation;}
     }
 
     public EventStore(Context context,Listener listener){this.context=context.getApplicationContext();this.listener=listener;continuousDir=new File(context.getFilesDir(),"continuous");continuousDir.mkdirs();}
+
+    /** Efface l'historique ECG glissant privé. À appeler uniquement lorsque la surveillance est arrêtée. */
+    public static int deleteContinuousHistory(Context context){return deleteTree(new File(context.getFilesDir(),"continuous"));}
+
+    /** Attend les écritures déjà engagées, invalide celles en attente puis efface toutes les traces historiques. */
+    public static int deleteAllStoredData(Context context){synchronized(DATA_LOCK){long next=generation(context)+1;context.getSharedPreferences("storage_state",Context.MODE_PRIVATE).edit().putLong("generation",next).commit();int deleted=EventHistory.deleteAllReports(context);deleted+=deleteContinuousHistory(context);SessionHistory.clear(context);return deleted;}}
 
     public synchronized void startSession(){closeChunk();ringPos=ringCount=0;captures.clear();openChunk(System.currentTimeMillis());pruneOldChunks();}
     public synchronized void stopSession(){closeChunk();ArrayList<Capture> pending=new ArrayList<>(captures);captures.clear();for(Capture c:pending)finalizeAsync(c,true);}
@@ -59,7 +66,7 @@ public final class EventStore {
     public synchronized void beginEvent(EcgEngine.DetectionEvent event){
         // Un même passage peut déclencher plusieurs règles : un seul dossier lisible suffit.
         for(Capture c:captures)if(Math.abs(c.event.timestampMs-event.timestampMs)<12_000)return;
-        String id=fileTime(event.timestampMs)+"_"+safe(event.type);Capture c=new Capture(event,id);
+        String id=fileTime(event.timestampMs)+"_"+safe(event.type);Capture c=new Capture(event,id,generation(context));
         int n=Math.min(PRE,ringCount),start=Math.floorMod(ringPos-n,RING);
         for(int i=0;i<n;i++){int p=(start+i)%RING;c.uv.add(ringUv[p]);c.ms.add(ringMs[p]);}
         c.targetSamples=c.uv.size()+POST;
@@ -71,7 +78,7 @@ public final class EventStore {
     private void closeChunk(){if(chunk!=null){try{chunk.flush();chunk.close();}catch(Exception ignored){}chunk=null;}}
     private void pruneOldChunks(){File[] files=continuousDir.listFiles();if(files==null)return;long cutoff=System.currentTimeMillis()-24L*3600_000L;for(File f:files)if(f.isFile()&&f.lastModified()<cutoff)f.delete();}
 
-    private void finalizeAsync(Capture c,boolean incomplete){writer.execute(()->{try{exportJsonl(c,incomplete);exportMetadata(c,incomplete);exportPdf(c,incomplete);EventHistory.markReady(context,c.id);if(listener!=null)listener.onReportReady(c.id,"Documents/PolarH10Monitor/"+c.id);}catch(Exception e){storeError("Rapport "+c.id+" non créé : "+e.getMessage());}});}
+    private void finalizeAsync(Capture c,boolean incomplete){writer.execute(()->{synchronized(DATA_LOCK){if(c.generation!=generation(context))return;try{exportJsonl(c,incomplete);exportMetadata(c,incomplete);exportPdf(c,incomplete);EventHistory.markReady(context,c.id);if(listener!=null)listener.onReportReady(c.id,"Documents/PolarH10Monitor/"+c.id);}catch(Exception e){storeError("Rapport "+c.id+" non créé : "+e.getMessage());}}});}
 
     private void exportJsonl(Capture c,boolean incomplete)throws IOException{
         try(OutputStream out=createDocument(c.id,"ecg_brut.jsonl","application/x-ndjson")){
@@ -118,6 +125,8 @@ public final class EventStore {
     }
 
     private void storeError(String message){if(listener!=null)listener.onStoreError(message);}
+    private static long generation(Context context){return context.getSharedPreferences("storage_state",Context.MODE_PRIVATE).getLong("generation",0);}
+    private static int deleteTree(File file){if(file==null||!file.exists())return 0;int count=0;File[]children=file.listFiles();if(children!=null)for(File child:children)count+=deleteTree(child);if(file.delete())count++;return count;}
     private static int nearestIndex(ArrayList<Long>x,long target){int best=0;long d=Long.MAX_VALUE;for(int i=0;i<x.size();i++){long n=Math.abs(x.get(i)-target);if(n<d){d=n;best=i;}}return best;}
     private static float drawWrapped(Canvas c,Paint p,String text,float x,float y,float width,float line){String[] words=text.split(" ");String row="";for(String word:words){String test=row.isEmpty()?word:row+" "+word;if(p.measureText(test)>width){if(!row.isEmpty())c.drawText(row,x,y,p);y+=line;row=word;}else row=test;}if(!row.isEmpty())c.drawText(row,x,y,p);return y;}
     private static int robustCenter(ArrayList<Integer> values,int start,int end){if(end<=start)return 0;ArrayList<Integer> sample=new ArrayList<>();int step=Math.max(1,(end-start)/200);for(int i=start;i<end;i+=step)sample.add(values.get(i));java.util.Collections.sort(sample);return sample.get(sample.size()/2);}

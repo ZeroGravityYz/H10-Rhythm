@@ -35,6 +35,8 @@ public final class SessionHistory {
         if(a.durationMs>0){a.avgBpm=weightedHr/a.durationMs;a.signalQuality=weightedQuality/a.durationMs;}if(hrvCount>0){a.rmssd=rmssd/hrvCount;a.sdnn=sdnn/hrvCount;}return a;
     }
 
+    public static synchronized void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(KEY).apply();}
+
     public static final class Aggregate{public int sessions,events,minBpm,maxBpm;public long durationMs;public double avgBpm,signalQuality,rmssd,sdnn;}
 
     public static final class Record{

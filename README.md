@@ -18,6 +18,7 @@ Développé par **Mattéo Leroy**.
 - rapports PDF silencieux et export JSONL comprenant 60 secondes avant et 30 secondes après un événement ;
 - tableau de bord sur 7 jours, 30 jours ou toute la période, recherche, filtres et VFC (RMSSD/SDNN) ;
 - indicateurs de session directement sur l’accueil et suppression globale des rapports ;
+- remise à zéro complète des rapports, valeurs brutes, signaux continus et statistiques d’historique ;
 - banc de test synthétique continu couvrant quatorze rythmes, anomalies et artefacts avant chaque publication ;
 - modèle morphologique personnel et apprentissage à partir des corrections de l’utilisateur ;
 - fonctionnement sans compte, publicité, serveur ou dépendance externe.
