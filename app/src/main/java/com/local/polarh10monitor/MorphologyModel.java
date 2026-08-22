@@ -9,9 +9,11 @@ public final class MorphologyModel {
 
     private int normalCount;
     private int confirmedCount;
+    private int artifactCount;
     private final double[] normalMean = new double[DIMENSIONS];
     private final double[] normalM2 = new double[DIMENSIONS];
     private final double[] confirmedMean = new double[DIMENSIONS];
+    private final double[] artifactMean = new double[DIMENSIONS];
     private double distanceMean;
     private double distanceM2;
 
@@ -33,6 +35,15 @@ public final class MorphologyModel {
         }
     }
 
+    /** Les exemples marqués comme artefacts forment un prototype séparé et ne polluent jamais la baseline sinusale. */
+    public synchronized void confirmArtifact(float[] vector) {
+        if (!valid(vector)) return;
+        artifactCount++;
+        for (int i = 0; i < DIMENSIONS; i++) {
+            artifactMean[i] += (vector[i] - artifactMean[i]) / artifactCount;
+        }
+    }
+
     private void addNormal(float[] vector) {
         double previousDistance = normalCount == 0 ? 0 : distance(vector, normalMean);
         normalCount++;
@@ -50,21 +61,28 @@ public final class MorphologyModel {
     }
 
     public synchronized Result evaluate(float[] vector) {
-        if (!valid(vector) || normalCount < 20) return new Result(0, threshold(), false, false, confirmedCount > 0);
+        if (!valid(vector) || normalCount < 20) return new Result(0, threshold(), false, false, false, confirmedCount > 0, artifactCount > 0);
         double score = distance(vector, normalMean);
         boolean ready = isReady();
         boolean anomaly = ready && score > threshold();
+        boolean artifact = false;
         if (ready && confirmedCount > 0) {
             double positiveDistance = distance(vector, confirmedMean);
             double normalDistance = Math.max(1e-6, score);
             anomaly = anomaly || positiveDistance < normalDistance * 0.88;
         }
-        return new Result(score, threshold(), ready, anomaly, confirmedCount > 0);
+        if (artifactCount > 0) {
+            double artifactDistance = distance(vector, artifactMean);
+            artifact = artifactDistance < Math.max(0.08, score * 0.82);
+            if (artifact) anomaly = false;
+        }
+        return new Result(score, threshold(), ready, anomaly, artifact, confirmedCount > 0, artifactCount > 0);
     }
 
     public synchronized boolean isReady() { return normalCount >= BASELINE_TARGET; }
     public synchronized int normalCount() { return normalCount; }
     public synchronized int confirmedCount() { return confirmedCount; }
+    public synchronized int artifactCount() { return artifactCount; }
 
     public synchronized double threshold() {
         int n = normalCount - 20;
@@ -73,16 +91,17 @@ public final class MorphologyModel {
     }
 
     public synchronized void reset() {
-        normalCount = confirmedCount = 0;
+        normalCount = confirmedCount = artifactCount = 0;
         distanceMean = distanceM2 = 0;
         for (int i = 0; i < DIMENSIONS; i++) {
-            normalMean[i] = normalM2[i] = confirmedMean[i] = 0;
+            normalMean[i] = normalM2[i] = confirmedMean[i] = artifactMean[i] = 0;
         }
     }
 
     public synchronized String serialize() {
         return normalCount + "|" + confirmedCount + "|" + format(distanceMean) + "|" + format(distanceM2)
-                + "|" + join(normalMean) + "|" + join(normalM2) + "|" + join(confirmedMean);
+                + "|" + join(normalMean) + "|" + join(normalM2) + "|" + join(confirmedMean)
+                + "|" + artifactCount + "|" + join(artifactMean);
     }
 
     public static MorphologyModel deserialize(String encoded) {
@@ -90,7 +109,7 @@ public final class MorphologyModel {
         if (encoded == null || encoded.isEmpty()) return model;
         try {
             String[] parts = encoded.split("\\|", -1);
-            if (parts.length != 7) return model;
+            if (parts.length != 7 && parts.length != 9) return model;
             model.normalCount = Math.max(0, Integer.parseInt(parts[0]));
             model.confirmedCount = Math.max(0, Integer.parseInt(parts[1]));
             model.distanceMean = Double.parseDouble(parts[2]);
@@ -98,6 +117,10 @@ public final class MorphologyModel {
             parse(parts[4], model.normalMean);
             parse(parts[5], model.normalM2);
             parse(parts[6], model.confirmedMean);
+            if (parts.length == 9) {
+                model.artifactCount = Math.max(0, Integer.parseInt(parts[7]));
+                parse(parts[8], model.artifactMean);
+            }
         } catch (RuntimeException ignored) {
             model.reset();
         }
@@ -142,14 +165,19 @@ public final class MorphologyModel {
         public final double threshold;
         public final boolean ready;
         public final boolean anomaly;
+        public final boolean artifact;
         public final boolean fewShotReady;
+        public final boolean artifactReady;
 
-        Result(double score, double threshold, boolean ready, boolean anomaly, boolean fewShotReady) {
+        Result(double score, double threshold, boolean ready, boolean anomaly, boolean artifact,
+               boolean fewShotReady, boolean artifactReady) {
             this.score = score;
             this.threshold = threshold;
             this.ready = ready;
             this.anomaly = anomaly;
+            this.artifact = artifact;
             this.fewShotReady = fewShotReady;
+            this.artifactReady = artifactReady;
         }
     }
 }

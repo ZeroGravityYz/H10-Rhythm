@@ -1,6 +1,6 @@
 H10 RHYTHM — INSTALLATION SANS ANDROID STUDIO
 
-1. Copie H10_Rhythm_v2.1.apk sur le téléphone Android.
+1. Télécharge H10_Rhythm_v2.5_test.apk depuis la dernière publication GitHub, puis copie-le sur le téléphone Android.
 2. Ouvre le fichier puis autorise temporairement l’installation d’applications inconnues pour l’application Fichiers.
 3. Lance H10 Rhythm et accepte « Appareils à proximité » et « Notifications ».
 4. Porte la ceinture, humidifie ses électrodes et ferme Polar Beat / Polar Flow.
@@ -9,7 +9,7 @@ H10 RHYTHM — INSTALLATION SANS ANDROID STUDIO
 7. Sur Samsung : Batterie → Limites d’utilisation en arrière-plan → Applications jamais en veille, ajoute H10 Rhythm.
 
 Une notification permanente doit rester visible pendant la surveillance.
-Les passages apparaissent immédiatement dans Historique. Le PDF devient disponible environ 120 secondes plus tard.
+Les passages apparaissent immédiatement dans Historique. Le PDF devient disponible environ 30 secondes plus tard.
 Le modèle personnel devient prêt après 500 battements propres et reste enregistré sur le téléphone.
 
 IMPORTANT : outil expérimental mono-dérivation, non validé comme dispositif médical. Il ne remplace pas un ECG médical ni l’avis d’un professionnel.

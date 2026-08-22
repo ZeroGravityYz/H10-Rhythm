@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 /** Tampon 5 minutes, historique binaire glissant 24 h et dossiers d'événements exportés. */
 public final class EventStore {
     public interface Listener { void onReportReady(String name, String location); void onStoreError(String message); }
-    private static final int FS=EcgEngine.FS, PRE=60*FS, POST=120*FS, RING=5*60*FS;
+    private static final int FS=EcgEngine.FS, PRE=60*FS, POST=30*FS, RING=5*60*FS;
     private final Context context; private final Listener listener;
     private final int[] ringUv=new int[RING]; private final long[] ringMs=new long[RING]; private int ringPos,ringCount;
     private final ArrayList<Capture> captures=new ArrayList<>();
@@ -40,6 +40,7 @@ public final class EventStore {
 
     private static final class Capture {
         final EcgEngine.DetectionEvent event; final String id; final ArrayList<Integer> uv=new ArrayList<>(); final ArrayList<Long> ms=new ArrayList<>();
+        int targetSamples;
         Capture(EcgEngine.DetectionEvent event,String id){this.event=event;this.id=id;}
     }
 
@@ -52,14 +53,16 @@ public final class EventStore {
         ringUv[ringPos]=uv;ringMs[ringPos]=timeMs;ringPos=(ringPos+1)%RING;if(ringCount<RING)ringCount++;
         writeChunkSample(uv,timeMs);
         Iterator<Capture> it=captures.iterator();
-        while(it.hasNext()){Capture c=it.next();c.uv.add(uv);c.ms.add(timeMs);if(c.uv.size()>=PRE+POST){it.remove();finalizeAsync(c,false);}}
+        while(it.hasNext()){Capture c=it.next();c.uv.add(uv);c.ms.add(timeMs);if(c.uv.size()>=c.targetSamples){it.remove();finalizeAsync(c,false);}}
     }
 
     public synchronized void beginEvent(EcgEngine.DetectionEvent event){
-        for(Capture c:captures)if(Math.abs(c.event.timestampMs-event.timestampMs)<15_000&&c.event.type.equals(event.type))return;
+        // Un même passage peut déclencher plusieurs règles : un seul dossier lisible suffit.
+        for(Capture c:captures)if(Math.abs(c.event.timestampMs-event.timestampMs)<12_000)return;
         String id=fileTime(event.timestampMs)+"_"+safe(event.type);Capture c=new Capture(event,id);
         int n=Math.min(PRE,ringCount),start=Math.floorMod(ringPos-n,RING);
         for(int i=0;i<n;i++){int p=(start+i)%RING;c.uv.add(ringUv[p]);c.ms.add(ringMs[p]);}
+        c.targetSamples=c.uv.size()+POST;
         captures.add(c);EventHistory.add(context,id,event);
     }
 
@@ -78,7 +81,7 @@ public final class EventStore {
     }
 
     private void exportMetadata(Capture c,boolean incomplete)throws IOException{
-        String body="{\n  \"id\": \""+json(c.id)+"\",\n  \"type\": \""+json(c.event.type)+"\",\n  \"title\": \""+json(c.event.title)+"\",\n  \"detail\": \""+json(c.event.detail)+"\",\n  \"timestamp_ms\": "+c.event.timestampMs+",\n  \"severity\": "+c.event.severity+",\n  \"sample_rate_hz\": "+FS+",\n  \"samples\": "+c.uv.size()+",\n  \"capture_incomplete\": "+incomplete+",\n  \"engine\": \""+EcgEngine.VERSION+"\",\n  \"personal_model_ready\": "+c.event.personalModelReady+",\n  \"morphology_score\": "+String.format(Locale.ROOT,"%.6f",c.event.morphologyScore)+",\n  \"morphology_threshold\": "+String.format(Locale.ROOT,"%.6f",c.event.morphologyThreshold)+",\n  \"author\": \"Mattéo Leroy\",\n  \"disclaimer\": \"Dépistage expérimental mono-dérivation, relecture médicale requise.\"\n}\n";
+        String body="{\n  \"id\": \""+json(c.id)+"\",\n  \"type\": \""+json(c.event.type)+"\",\n  \"title\": \""+json(c.event.title)+"\",\n  \"detail\": \""+json(c.event.detail)+"\",\n  \"timestamp_ms\": "+c.event.timestampMs+",\n  \"severity\": "+c.event.severity+",\n  \"sample_rate_hz\": "+FS+",\n  \"samples\": "+c.uv.size()+",\n  \"capture_incomplete\": "+incomplete+",\n  \"engine\": \""+EcgEngine.VERSION+"\",\n  \"heart_rate_bpm\": "+c.event.bpm+",\n  \"hrv_rmssd_ms\": "+String.format(Locale.ROOT,"%.2f",c.event.rmssdMs)+",\n  \"hrv_sdnn_ms\": "+String.format(Locale.ROOT,"%.2f",c.event.sdnnMs)+",\n  \"signal_quality_percent\": "+String.format(Locale.ROOT,"%.2f",c.event.signalQualityPercent)+",\n  \"personal_model_ready\": "+c.event.personalModelReady+",\n  \"morphology_score\": "+String.format(Locale.ROOT,"%.6f",c.event.morphologyScore)+",\n  \"morphology_threshold\": "+String.format(Locale.ROOT,"%.6f",c.event.morphologyThreshold)+",\n  \"author\": \"Mattéo Leroy\",\n  \"disclaimer\": \"Dépistage expérimental mono-dérivation, relecture médicale requise.\"\n}\n";
         try(OutputStream out=createDocument(c.id,"evenement.json","application/json")){out.write(body.getBytes(StandardCharsets.UTF_8));}
     }
 
@@ -88,22 +91,25 @@ public final class EventStore {
         p.setColor(Color.rgb(20,28,38));p.setTextSize(21);p.setFakeBoldText(true);canvas.drawText("H10 Rhythm — événement à vérifier",36,48,p);
         p.setTextSize(15);p.setColor(Color.rgb(190,40,65));canvas.drawText(c.event.title,36,82,p);p.setFakeBoldText(false);p.setColor(Color.DKGRAY);p.setTextSize(10);
         canvas.drawText("Heure : "+humanTime(c.event.timestampMs),36,106,p);canvas.drawText("Moteur : "+EcgEngine.VERSION+" • 130 Hz • µV",36,122,p);
-        drawWrapped(canvas,p,c.event.detail,36,146,w-72,13);
-        p.setTextSize(9);p.setColor(Color.GRAY);drawWrapped(canvas,p,"Développé par Mattéo Leroy. Outil expérimental mono-dérivation : ce document ne constitue pas un diagnostic. Conserver ecg_brut.jsonl pour une éventuelle relecture.",36,194,w-72,12);
-        int eventPos=nearestIndex(c.ms,c.event.timestampMs),start=Math.max(0,eventPos-10*FS),stripSamples=(int)(7.2*FS),y=270;
+        float textEnd=drawWrapped(canvas,p,c.event.detail,36,146,w-72,13);
+        p.setTextSize(10);p.setColor(Color.rgb(28,92,82));canvas.drawText(String.format(Locale.FRANCE,"FC %s  •  VFC RMSSD %s  •  SDNN %s  •  signal %.0f %%",c.event.bpm>0?c.event.bpm+" bpm":"--",metric(c.event.rmssdMs),metric(c.event.sdnnMs),c.event.signalQualityPercent),36,Math.max(184,textEnd+9),p);
+        p.setTextSize(8.5f);p.setColor(Color.GRAY);drawWrapped(canvas,p,"Affichage du tracé limité à ±2 mV pour rester lisible ; les valeurs brutes non limitées restent dans ecg_brut.jsonl. Outil expérimental mono-dérivation, sans valeur diagnostique.",36,212,w-72,11);
+        int eventPos=nearestIndex(c.ms,c.event.timestampMs),start=Math.max(0,eventPos-10*FS),stripSamples=(int)(7.2*FS),y=260;
         for(int strip=0;strip<4;strip++){drawStrip(canvas,p,c,start+strip*stripSamples,stripSamples,36,y,w-72,116,eventPos);y+=136;}
-        if(incomplete){p.setColor(Color.RED);p.setTextSize(10);canvas.drawText("Capture interrompue avant la fin des 120 secondes post-événement.",36,820,p);}doc.finishPage(page);
+        if(incomplete){p.setColor(Color.RED);p.setTextSize(9);canvas.drawText("Capture interrompue avant les 30 secondes post-événement.",36,820,p);}else{p.setColor(Color.GRAY);p.setTextSize(8);canvas.drawText("H10 Rhythm • Développé par Mattéo Leroy • Rapport généré localement",36,820,p);}doc.finishPage(page);
         try(OutputStream out=createDocument(c.id,"rapport.pdf","application/pdf")){doc.writeTo(out);}finally{doc.close();}
     }
 
     private void drawStrip(Canvas c,Paint p,Capture cap,int start,int count,float x,float y,float width,float height,int eventPos){
+        int saved=c.save();c.clipRect(x,y,x+width,y+height);
         p.setStyle(Paint.Style.STROKE);float secWidth=width/7.2f,small=secWidth/25f;
         for(float gx=x;gx<=x+width;gx+=small){int k=Math.round((gx-x)/small);p.setColor(k%5==0?0x55c62843:0x22c62843);p.setStrokeWidth(k%5==0?1f:.5f);c.drawLine(gx,y,gx,y+height,p);}
         for(float gy=y;gy<=y+height;gy+=small){int k=Math.round((gy-y)/small);p.setColor(k%5==0?0x55c62843:0x22c62843);p.setStrokeWidth(k%5==0?1f:.5f);c.drawLine(x,gy,x+width,gy,p);}
         p.setColor(Color.rgb(15,22,30));p.setStrokeWidth(1.2f);android.graphics.Path path=new android.graphics.Path();boolean begun=false;float uvToPt=28.346f/1000f;
-        int end=Math.min(cap.uv.size(),start+count);for(int i=Math.max(0,start);i<end;i++){float px=x+(i-start)/(float)Math.max(1,count-1)*width,py=y+height/2-cap.uv.get(i)*uvToPt;if(!begun){path.moveTo(px,py);begun=true;}else path.lineTo(px,py);}c.drawPath(path,p);
+        int end=Math.min(cap.uv.size(),start+count);int center=robustCenter(cap.uv,Math.max(0,start),end);
+        for(int i=Math.max(0,start);i<end;i++){float px=x+(i-start)/(float)Math.max(1,count-1)*width;int display=Math.max(-2000,Math.min(2000,cap.uv.get(i)-center));float py=y+height/2-display*uvToPt;if(!begun){path.moveTo(px,py);begun=true;}else path.lineTo(px,py);}c.drawPath(path,p);
         if(eventPos>=start&&eventPos<start+count){float ex=x+(eventPos-start)/(float)Math.max(1,count-1)*width;p.setColor(Color.RED);p.setStrokeWidth(1.5f);c.drawLine(ex,y,ex,y+height,p);}
-        p.setStyle(Paint.Style.FILL);p.setColor(Color.DKGRAY);p.setTextSize(8);c.drawText(String.format(Locale.FRANCE,"%+.1f s",(start-eventPos)/(double)FS),x,y-3,p);
+        c.restoreToCount(saved);p.setStyle(Paint.Style.FILL);p.setColor(Color.DKGRAY);p.setTextSize(8);c.drawText(String.format(Locale.FRANCE,"%+.1f s",(start-eventPos)/(double)FS),x,y-3,p);
     }
 
     private OutputStream createDocument(String eventId,String name,String mime)throws IOException{
@@ -113,7 +119,9 @@ public final class EventStore {
 
     private void storeError(String message){if(listener!=null)listener.onStoreError(message);}
     private static int nearestIndex(ArrayList<Long>x,long target){int best=0;long d=Long.MAX_VALUE;for(int i=0;i<x.size();i++){long n=Math.abs(x.get(i)-target);if(n<d){d=n;best=i;}}return best;}
-    private static void drawWrapped(Canvas c,Paint p,String text,float x,float y,float width,float line){String[] words=text.split(" ");String row="";for(String word:words){String test=row.isEmpty()?word:row+" "+word;if(p.measureText(test)>width){c.drawText(row,x,y,p);y+=line;row=word;}else row=test;}if(!row.isEmpty())c.drawText(row,x,y,p);}
+    private static float drawWrapped(Canvas c,Paint p,String text,float x,float y,float width,float line){String[] words=text.split(" ");String row="";for(String word:words){String test=row.isEmpty()?word:row+" "+word;if(p.measureText(test)>width){if(!row.isEmpty())c.drawText(row,x,y,p);y+=line;row=word;}else row=test;}if(!row.isEmpty())c.drawText(row,x,y,p);return y;}
+    private static int robustCenter(ArrayList<Integer> values,int start,int end){if(end<=start)return 0;ArrayList<Integer> sample=new ArrayList<>();int step=Math.max(1,(end-start)/200);for(int i=start;i<end;i+=step)sample.add(values.get(i));java.util.Collections.sort(sample);return sample.get(sample.size()/2);}
+    private static String metric(double value){return value>0?String.format(Locale.FRANCE,"%.0f ms",value):"--";}
     private static String fileTime(long ms){return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",Locale.ROOT).format(new Date(ms));}
     private static String humanTime(long ms){return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS",Locale.FRANCE).format(new Date(ms));}
     private static String safe(String s){return s.replaceAll("[^A-Za-z0-9_-]","_");}

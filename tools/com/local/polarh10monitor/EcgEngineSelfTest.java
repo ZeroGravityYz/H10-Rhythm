@@ -16,5 +16,13 @@ public final class EcgEngineSelfTest {
         boolean esv=false;for(EcgEngine.DetectionEvent e:events){System.out.println(e.type+" | "+e.detail);if(e.type.equals("ESV"))esv=true;}
         EcgEngine.Snapshot s=engine.snapshot();System.out.println("bpm="+s.bpm+" esv="+s.esv+" events="+s.events+" signal="+s.signalGood);
         if(!esv||s.esv<1)throw new AssertionError("L’ESV synthétique n’a pas été détectée");
+
+        ArrayList<EcgEngine.DetectionEvent> contactEvents=new ArrayList<>();EcgEngine contactEngine=new EcgEngine(contactEvents::add);
+        for(int i=0;i<30*EcgEngine.FS;i++){double now=i/(double)EcgEngine.FS,y=25*Math.sin(2*Math.PI*.2*now);double phase=(now-.7-.015*Math.sin(now*.5))%0.8;if(phase<0)phase+=.8;y+=900*Math.exp(-.5*Math.pow(phase/.014,2))-170*Math.exp(-.5*Math.pow((phase-.03)/.018,2));if(i==12*EcgEngine.FS+17)y=120000;if(i==12*EcgEngine.FS+18)y=-90000;contactEngine.push((int)Math.round(y),start+Math.round(i*1000.0/EcgEngine.FS));}
+        EcgEngine.Snapshot contact=contactEngine.snapshot();
+        if(!contactEvents.isEmpty())throw new AssertionError("Le choc de contact a créé une fausse alerte : "+contactEvents.get(0).type);
+        if(contact.signalQualityPercent>=100)throw new AssertionError("Le choc de contact n’a pas dégradé le SQI");
+        if(contact.rmssdMs<=0||contact.sdnnMs<=0)throw new AssertionError("La VFC n’a pas été calculée");
+        System.out.println("Contact artifact rejected; no false alert/pause; HRV available");
     }
 }

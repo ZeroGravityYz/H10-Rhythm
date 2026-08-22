@@ -16,6 +16,13 @@ public final class MorphologyModelSelfTest {
         if(restored.normalCount()!=MorphologyModel.BASELINE_TARGET||!restored.evaluate(unusual).anomaly)throw new AssertionError("persistence failed");
         restored.confirmAnomaly(unusual);
         if(restored.confirmedCount()!=1)throw new AssertionError("few-shot feedback failed");
-        System.out.println("Morphology model: baseline, anomaly, persistence and feedback OK");
+        float[] artifact=new float[MorphologyModel.DIMENSIONS];
+        for(int i=0;i<artifact.length;i++)artifact[i]=(i<3?3.5f:-.4f);
+        restored.confirmArtifact(artifact);
+        restored.confirmArtifact(artifact);
+        if(!restored.evaluate(artifact).artifact)throw new AssertionError("artifact prototype failed");
+        MorphologyModel withArtifact=MorphologyModel.deserialize(restored.serialize());
+        if(withArtifact.artifactCount()!=2||!withArtifact.evaluate(artifact).artifact)throw new AssertionError("artifact persistence failed");
+        System.out.println("Morphology model: baseline, anomaly, artifact, persistence and feedback OK");
     }
 }

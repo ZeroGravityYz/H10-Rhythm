@@ -7,12 +7,17 @@ Développé par **Mattéo Leroy**.
 ## Fonctionnalités
 
 - connexion directe au service BLE PMD du Polar H10 ;
-- tracé ECG calibré à 25 mm/s et 10 mm/mV, rendu jusqu’à 60 FPS ;
+- tracé ECG fluide calibré à 25 mm/s et 10 mm/mV ;
 - surveillance en service de premier plan avec reconnexion automatique ;
 - détection de battements prématurés, pauses et rythmes durablement rapides, lents ou irréguliers ;
 - historique local des passages détectés ;
 - navigation supérieure compatible avec les boutons et gestes système Android ;
-- rapport PDF et export JSONL comprenant 60 secondes avant et jusqu’à 120 secondes après un événement ;
+- barrière anti-contact immédiate et quarantaine du signal avant toute décision ;
+- profil morphologique personnel avec prototypes séparés pour les anomalies et les artefacts confirmés ;
+- rapports PDF silencieux et export JSONL comprenant 60 secondes avant et 30 secondes après un événement ;
+- tableau de bord sur 7 jours, 30 jours ou toute la période, recherche, filtres et VFC (RMSSD/SDNN) ;
+- indicateurs de session directement sur l’accueil et suppression globale des rapports ;
+- banc de test synthétique continu couvrant onze rythmes, anomalies et artefacts avant chaque publication ;
 - modèle morphologique personnel et apprentissage à partir des corrections de l’utilisateur ;
 - fonctionnement sans compte, publicité, serveur ou dépendance externe.
 
