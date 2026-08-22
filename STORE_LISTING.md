@@ -17,11 +17,12 @@ L’application apprend progressivement la forme habituelle de vos battements. L
 Fonctions principales :
 
 - tracé ECG fluide à 130 Hz ;
+- filtrage des manipulations grâce au capteur de mouvement du Polar H10 ;
 - connexion Bluetooth directe et reconnexion automatique ;
 - analyse locale sans compte ni serveur ;
 - historique clair des passages enregistrés ;
 - rapports PDF et export des données brutes ;
-- modèle morphologique personnel conservé sur le téléphone ;
+- modèle morphologique personnel conservé sur le téléphone et corrections utilisateur réversibles ;
 - surveillance possible lorsque l’écran est éteint.
 
 H10 Rhythm est un projet expérimental mono-dérivation. Il ne fournit pas de diagnostic, ne remplace pas un ECG médical et ne peut pas exclure un trouble du rythme. En présence de symptômes inquiétants, contactez un professionnel de santé ou les services d’urgence.

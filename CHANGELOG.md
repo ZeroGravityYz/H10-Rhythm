@@ -1,5 +1,15 @@
 # Historique des versions
 
+## 2.6.0-test
+
+- activation du flux accéléromètre du Polar H10 à 50 Hz pour mettre en quarantaine les secousses réelles de la ceinture avant toute alerte cardiaque ;
+- décision morphologique retardée de 1,2 seconde afin d’observer la récupération du signal et les données de mouvement qui suivent le complexe ;
+- nouveau contrôle de qualité local autour de chaque événement : déplacement de ligne de base, saturation, énergie hors QRS et retour au calme ;
+- validation des QRS par deux indices indépendants, amplitude filtrée et concentration de l’énergie dérivée ;
+- les battements prématurés larges sans pause compensatrice ne sont plus signalés sauf si le profil personnel est prêt et si les contrôles locaux concordent fortement ;
+- annotations Normal / Anomalie / Artefact reconstruites depuis l’historique : un passage ne compte qu’une fois et un changement d’étiquette annule l’ancienne influence ;
+- banc de régression porté à quatorze scénarios, avec plateau lent de ceinture, anomalie pendant une secousse et anomalie après retour au calme.
+
 ## 2.5.0-test
 
 - suppression complète de la seconde lecture IA et nettoyage automatique de ses anciens fichiers de partage, sans toucher aux PDF ni aux ECG bruts ;

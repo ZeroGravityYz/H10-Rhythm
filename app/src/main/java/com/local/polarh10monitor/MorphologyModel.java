@@ -10,10 +10,12 @@ public final class MorphologyModel {
     private int normalCount;
     private int confirmedCount;
     private int artifactCount;
+    private int reviewedNormalCount;
     private final double[] normalMean = new double[DIMENSIONS];
     private final double[] normalM2 = new double[DIMENSIONS];
     private final double[] confirmedMean = new double[DIMENSIONS];
     private final double[] artifactMean = new double[DIMENSIONS];
+    private final double[] reviewedNormalMean = new double[DIMENSIONS];
     private double distanceMean;
     private double distanceM2;
 
@@ -24,23 +26,28 @@ public final class MorphologyModel {
 
     public synchronized void confirmNormal(float[] vector) {
         if (!valid(vector)) return;
-        addNormal(vector);
+        reviewedNormalCount++;
+        addToMean(vector, reviewedNormalMean, reviewedNormalCount);
     }
 
     public synchronized void confirmAnomaly(float[] vector) {
         if (!valid(vector)) return;
         confirmedCount++;
-        for (int i = 0; i < DIMENSIONS; i++) {
-            confirmedMean[i] += (vector[i] - confirmedMean[i]) / confirmedCount;
-        }
+        addToMean(vector, confirmedMean, confirmedCount);
     }
 
     /** Les exemples marqués comme artefacts forment un prototype séparé et ne polluent jamais la baseline sinusale. */
     public synchronized void confirmArtifact(float[] vector) {
         if (!valid(vector)) return;
         artifactCount++;
+        addToMean(vector, artifactMean, artifactCount);
+    }
+
+    /** Reconstruit les exemples utilisateurs depuis l'historique afin qu'une annotation soit unique et réversible. */
+    public synchronized void clearFeedback() {
+        confirmedCount = artifactCount = reviewedNormalCount = 0;
         for (int i = 0; i < DIMENSIONS; i++) {
-            artifactMean[i] += (vector[i] - artifactMean[i]) / artifactCount;
+            confirmedMean[i] = artifactMean[i] = reviewedNormalMean[i] = 0;
         }
     }
 
@@ -71,9 +78,14 @@ public final class MorphologyModel {
             double normalDistance = Math.max(1e-6, score);
             anomaly = anomaly || positiveDistance < normalDistance * 0.88;
         }
+        if (reviewedNormalCount > 0) {
+            double reviewedNormalDistance = distance(vector, reviewedNormalMean);
+            if (reviewedNormalDistance < Math.max(0.08, score * 0.86)) anomaly = false;
+        }
         if (artifactCount > 0) {
             double artifactDistance = distance(vector, artifactMean);
-            artifact = artifactDistance < Math.max(0.08, score * 0.82);
+            double reviewedNormalDistance = reviewedNormalCount > 0 ? distance(vector, reviewedNormalMean) : Double.MAX_VALUE;
+            artifact = artifactDistance < Math.max(0.08, score * 0.82) && artifactDistance < reviewedNormalDistance * 0.92;
             if (artifact) anomaly = false;
         }
         return new Result(score, threshold(), ready, anomaly, artifact, confirmedCount > 0, artifactCount > 0);
@@ -91,17 +103,18 @@ public final class MorphologyModel {
     }
 
     public synchronized void reset() {
-        normalCount = confirmedCount = artifactCount = 0;
+        normalCount = confirmedCount = artifactCount = reviewedNormalCount = 0;
         distanceMean = distanceM2 = 0;
         for (int i = 0; i < DIMENSIONS; i++) {
-            normalMean[i] = normalM2[i] = confirmedMean[i] = artifactMean[i] = 0;
+            normalMean[i] = normalM2[i] = confirmedMean[i] = artifactMean[i] = reviewedNormalMean[i] = 0;
         }
     }
 
     public synchronized String serialize() {
         return normalCount + "|" + confirmedCount + "|" + format(distanceMean) + "|" + format(distanceM2)
                 + "|" + join(normalMean) + "|" + join(normalM2) + "|" + join(confirmedMean)
-                + "|" + artifactCount + "|" + join(artifactMean);
+                + "|" + artifactCount + "|" + join(artifactMean)
+                + "|" + reviewedNormalCount + "|" + join(reviewedNormalMean);
     }
 
     public static MorphologyModel deserialize(String encoded) {
@@ -109,7 +122,7 @@ public final class MorphologyModel {
         if (encoded == null || encoded.isEmpty()) return model;
         try {
             String[] parts = encoded.split("\\|", -1);
-            if (parts.length != 7 && parts.length != 9) return model;
+            if (parts.length != 7 && parts.length != 9 && parts.length != 11) return model;
             model.normalCount = Math.max(0, Integer.parseInt(parts[0]));
             model.confirmedCount = Math.max(0, Integer.parseInt(parts[1]));
             model.distanceMean = Double.parseDouble(parts[2]);
@@ -120,6 +133,12 @@ public final class MorphologyModel {
             if (parts.length == 9) {
                 model.artifactCount = Math.max(0, Integer.parseInt(parts[7]));
                 parse(parts[8], model.artifactMean);
+            }
+            if (parts.length == 11) {
+                model.artifactCount = Math.max(0, Integer.parseInt(parts[7]));
+                parse(parts[8], model.artifactMean);
+                model.reviewedNormalCount = Math.max(0, Integer.parseInt(parts[9]));
+                parse(parts[10], model.reviewedNormalMean);
             }
         } catch (RuntimeException ignored) {
             model.reset();
@@ -140,6 +159,10 @@ public final class MorphologyModel {
             sum += delta * delta;
         }
         return Math.sqrt(sum / DIMENSIONS);
+    }
+
+    private static void addToMean(float[] vector, double[] mean, int count) {
+        for (int i = 0; i < DIMENSIONS; i++) mean[i] += (vector[i] - mean[i]) / count;
     }
 
     private static String join(double[] values) {

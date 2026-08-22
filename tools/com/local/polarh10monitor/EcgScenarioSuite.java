@@ -9,6 +9,7 @@ public final class EcgScenarioSuite {
     private static final long START=1_780_000_000_000L;
     private static final class Beat { final double time;final boolean ventricular;Beat(double time,boolean ventricular){this.time=time;this.ventricular=ventricular;} }
     private interface Noise { double at(double time,int sample); }
+    private interface Movement { int[] at(double time,int sample); }
     private static final class Outcome { final ArrayList<EcgEngine.DetectionEvent> events;final EcgEngine.Snapshot snapshot;Outcome(ArrayList<EcgEngine.DetectionEvent> e,EcgEngine.Snapshot s){events=e;snapshot=s;} }
 
     public static void main(String[] args){
@@ -24,6 +25,17 @@ public final class EcgScenarioSuite {
 
         Outcome contact=run(35,regular(35,.80,.02),(t,i)->i==12*EcgEngine.FS+7?120000:i==12*EcgEngine.FS+8?-90000:0,new MorphologyModel());require(contact.events.isEmpty(),"choc de contact",contact);
         Outcome movement=run(35,regular(35,.80,.02),(t,i)->t>=12&&t<16?1900*Math.sin(2*Math.PI*21*t)+900*Math.sin(2*Math.PI*7.3*t):0,new MorphologyModel());require(noCardiacEvents(movement),"mouvement continu",movement);
+        Outcome plateau=run(35,regular(35,.80,.02),(t,i)->{
+            if(t<12||t>=13.3)return 0;if(t<12.18)return 2300*(t-12)/.18;if(t<12.62)return 2300;
+            if(t<12.78)return 2300-4500*(t-12.62)/.16;return -2200*(1-(t-12.78)/.52);
+        },new MorphologyModel());require(noCardiacEvents(plateau),"plateau lent de ceinture",plateau);
+
+        ArrayList<Beat> movedPvc=regular(35,.80,.015);replaceWithPremature(movedPvc,12.0,.53,1.07,true);
+        Movement shake=(time,sample)->time>=12.0&&time<13.0?new int[]{(sample%2==0?420:-260),120,920}:new int[]{0,0,1000};
+        Outcome quarantined=run(35,movedPvc,null,new MorphologyModel(),shake);require(noCardiacEvents(quarantined),"ESV apparente pendant secousse mise en quarantaine",quarantined);
+
+        ArrayList<Beat> afterMotionPvc=regular(38,.80,.015);replaceWithPremature(afterMotionPvc,17.0,.53,1.07,true);
+        Outcome afterMotion=run(38,afterMotionPvc,null,new MorphologyModel(),shake);require(has(afterMotion,"ESV")||has(afterMotion,"WIDE_PREMATURE"),"ESV après retour au calme",afterMotion);
 
         ArrayList<Beat> gradual=new ArrayList<>();double t=.7;while(t<70){gradual.add(new Beat(t,false));double progress=Math.min(1,t/55);t+=.78-(.30*progress);}
         Outcome exercise=run(70,gradual,null,new MorphologyModel());if(has(exercise,"REGULAR_TACHY"))throw failure("accélération sinusale progressive classée TSV",exercise);
@@ -38,10 +50,11 @@ public final class EcgScenarioSuite {
 
         MorphologyModel learned=new MorphologyModel();ArrayList<Beat> longRun=regular(450,.80,.025);replaceWithPremature(longRun,420,.52,1.08,true);Outcome integrated=run(450,longRun,null,learned);if(!learned.isReady())throw new AssertionError("Le profil personnel n'est pas prêt après 500 battements propres");require(hasReadyMorphologyEvent(integrated),"ESV après apprentissage ML",integrated);
 
-        System.out.println("11 scenarios continus OK: normal, ESV, ESA, contact, mouvement, effort, tachy, brady, irrégulier, pause et ML prêt.");
+        System.out.println("14 scenarios continus OK: rythme, ectopies, contact, bruit, plateau, mouvement H10, effort, épisodes longs, pause et ML prêt.");
     }
 
-    private static Outcome run(double duration,List<Beat> beats,Noise noise,MorphologyModel model){ArrayList<EcgEngine.DetectionEvent> events=new ArrayList<>();EcgEngine engine=new EcgEngine(events::add,model);Random random=new Random(42);int cursor=0,total=(int)Math.ceil(duration*EcgEngine.FS);for(int i=0;i<total;i++){double now=i/(double)EcgEngine.FS;while(cursor<beats.size()&&beats.get(cursor).time<now-.45)cursor++;double value=28*Math.sin(2*Math.PI*.22*now)+5*Math.sin(2*Math.PI*17*now)+random.nextGaussian()*2.2;for(int j=Math.max(0,cursor-1);j<Math.min(beats.size(),cursor+4);j++){Beat b=beats.get(j);double d=now-b.time;if(d<-.3||d>.42)continue;if(b.ventricular)value+=-1450*g(d+.025,.043)+880*g(d-.072,.052);else value+=880*g(d,.014)-175*g(d-.031,.018)+115*g(d-.19,.05);}if(noise!=null)value+=noise.at(now,i);engine.push((int)Math.round(value),START+Math.round(i*1000.0/EcgEngine.FS));}return new Outcome(events,engine.snapshot());}
+    private static Outcome run(double duration,List<Beat> beats,Noise noise,MorphologyModel model){return run(duration,beats,noise,model,null);}
+    private static Outcome run(double duration,List<Beat> beats,Noise noise,MorphologyModel model,Movement movement){ArrayList<EcgEngine.DetectionEvent> events=new ArrayList<>();EcgEngine engine=new EcgEngine(events::add,model);Random random=new Random(42);int cursor=0,total=(int)Math.ceil(duration*EcgEngine.FS);for(int i=0;i<total;i++){double now=i/(double)EcgEngine.FS;long timestamp=START+Math.round(i*1000.0/EcgEngine.FS);if(movement!=null){int[]a=movement.at(now,i);engine.pushMotion(a[0],a[1],a[2],timestamp);}while(cursor<beats.size()&&beats.get(cursor).time<now-.45)cursor++;double value=28*Math.sin(2*Math.PI*.22*now)+5*Math.sin(2*Math.PI*17*now)+random.nextGaussian()*2.2;for(int j=Math.max(0,cursor-1);j<Math.min(beats.size(),cursor+4);j++){Beat b=beats.get(j);double d=now-b.time;if(d<-.3||d>.42)continue;if(b.ventricular)value+=-1450*g(d+.025,.043)+880*g(d-.072,.052);else value+=880*g(d,.014)-175*g(d-.031,.018)+115*g(d-.19,.05);}if(noise!=null)value+=noise.at(now,i);engine.push((int)Math.round(value),timestamp);}return new Outcome(events,engine.snapshot());}
     private static double g(double x,double sigma){return Math.exp(-.5*x*x/(sigma*sigma));}
     private static ArrayList<Beat> regular(double duration,double rr,double variability){ArrayList<Beat> out=new ArrayList<>();double t=.7;while(t<duration){out.add(new Beat(t,false));t+=rr+variability*Math.sin(t*.57);}return out;}
     private static void replaceWithPremature(ArrayList<Beat> beats,double around,double early,double after,boolean ventricular){int position=0;while(position<beats.size()&&beats.get(position).time<around)position++;if(position<=0||position>=beats.size()-1)return;double previous=beats.get(position-1).time;beats.remove(position);double ectopic=previous+early;beats.add(position,new Beat(ectopic,ventricular));double next=ectopic+after;beats.set(position+1,new Beat(next,false));for(int i=position+2;i<beats.size();i++)beats.set(i,new Beat(next+(i-position-1)*.80,false));}

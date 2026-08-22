@@ -21,8 +21,16 @@ public final class MorphologyModelSelfTest {
         restored.confirmArtifact(artifact);
         restored.confirmArtifact(artifact);
         if(!restored.evaluate(artifact).artifact)throw new AssertionError("artifact prototype failed");
+        restored.clearFeedback();
+        restored.confirmArtifact(artifact);
+        if(restored.artifactCount()!=1)throw new AssertionError("unique feedback rebuild failed");
+        restored.clearFeedback();
+        restored.confirmAnomaly(unusual);
+        if(restored.artifactCount()!=0||restored.confirmedCount()!=1)throw new AssertionError("reversible feedback failed");
+        restored.clearFeedback();
+        restored.confirmArtifact(artifact);
         MorphologyModel withArtifact=MorphologyModel.deserialize(restored.serialize());
-        if(withArtifact.artifactCount()!=2||!withArtifact.evaluate(artifact).artifact)throw new AssertionError("artifact persistence failed");
-        System.out.println("Morphology model: baseline, anomaly, artifact, persistence and feedback OK");
+        if(withArtifact.artifactCount()!=1||!withArtifact.evaluate(artifact).artifact)throw new AssertionError("artifact persistence failed");
+        System.out.println("Morphology model: baseline, anomaly, artifact, persistence, unique and reversible feedback OK");
     }
 }

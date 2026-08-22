@@ -9,7 +9,8 @@ import java.util.Locale;
 /** Moteur causal mono-dérivation. Les sorties sont des suspicions à relire, jamais des diagnostics. */
 public final class EcgEngine {
     public static final int FS = 130;
-    public static final String VERSION = "V2.3-delayed-morphology+artifact-gate-2026-08";
+    public static final String VERSION = "V2.6-motion-fusion+delayed-local-sqi-2026-08";
+    private static final long DECISION_DELAY_SAMPLES = Math.round(FS * 1.2);
 
     public interface Listener { void onEvent(DetectionEvent event); }
 
@@ -38,20 +39,20 @@ public final class EcgEngine {
 
     public static final class Snapshot {
         public final int bpm, esv, esa, pauses, af, tachy, brady, runs, events, beats;
-        public final boolean signalGood;
+        public final boolean signalGood, motionAvailable, motionActive;
         public final long samples;
         public final int modelSamples, confirmedExamples;
         public final int artifactExamples, artifactRejected;
         public final boolean modelReady;
         public final double morphologyScore, morphologyThreshold, rmssdMs, sdnnMs, signalQualityPercent;
         Snapshot(int bpm, int esv, int esa, int pauses, int af, int tachy, int brady, int runs, int beats,
-                 int events, boolean signalGood, long samples, int modelSamples, int confirmedExamples,
+                 int events, boolean signalGood, boolean motionAvailable, boolean motionActive, long samples, int modelSamples, int confirmedExamples,
                  int artifactExamples, int artifactRejected, boolean modelReady, double morphologyScore,
                  double morphologyThreshold, double rmssdMs, double sdnnMs, double signalQualityPercent) {
             this.bpm=bpm; this.esv=esv; this.esa=esa; this.pauses=pauses; this.af=af;
             this.tachy=tachy; this.brady=brady; this.runs=runs; this.events=events;
             this.beats=beats;
-            this.signalGood=signalGood; this.samples=samples;
+            this.signalGood=signalGood;this.motionAvailable=motionAvailable;this.motionActive=motionActive;this.samples=samples;
             this.modelSamples=modelSamples;this.confirmedExamples=confirmedExamples;this.modelReady=modelReady;
             this.artifactExamples=artifactExamples;this.artifactRejected=artifactRejected;
             this.morphologyScore=morphologyScore;this.morphologyThreshold=morphologyThreshold;
@@ -66,6 +67,17 @@ public final class EcgEngine {
         }
     }
 
+    private static final class MotionWindow {
+        long fromMs,toMs;MotionWindow(long fromMs,long toMs){this.fromMs=fromMs;this.toMs=toMs;}
+    }
+
+    private static final class LocalQuality {
+        final boolean artifact,dualQrs,excellent;final double baselineShift,outsideRatio;
+        LocalQuality(boolean artifact,boolean dualQrs,boolean excellent,double baselineShift,double outsideRatio){
+            this.artifact=artifact;this.dualQrs=dualQrs;this.excellent=excellent;this.baselineShift=baselineShift;this.outsideRatio=outsideRatio;
+        }
+    }
+
     private final Listener listener;
     private final MorphologyModel morphologyModel;
     private final Biquad high = new Biquad(true, .8, FS);
@@ -76,12 +88,17 @@ public final class EcgEngine {
     private final ArrayList<Beat> beats = new ArrayList<>();
     private final ArrayList<Double> normalRr = new ArrayList<>();
     private final ArrayList<Double> rrHistory = new ArrayList<>();
+    private final ArrayList<MotionWindow> motionWindows = new ArrayList<>();
     private long index=-1, lastR=-1000000, lastPauseIndex=-1000000, pauseArmIndex;
     private double prev2, prev1, signalAmp=260;
     private int bpm, esv, esa, pauses, af, tachy, brady, runs, eventCount, artifactRejected, beatCount;
     private long qualityEligibleSamples, qualityGoodSamples;
     private long bradySince=-1, tachySince=-1, abruptTachyUntil=-1, regularTachyDetectedUntil=-1;
     private double lastMorphologyScore;
+    private boolean motionAvailable,haveAcceleration;
+    private int lastAx,lastAy,lastAz;
+    private double motionEnergy;
+    private long motionBadUntilMs,lastTimestampMs;
     private final java.util.HashMap<String,Long> cooldown = new java.util.HashMap<>();
 
     public EcgEngine(Listener listener) { this(listener,new MorphologyModel()); }
@@ -94,9 +111,28 @@ public final class EcgEngine {
         index=-1; lastR=-1000000; lastPauseIndex=-1000000; pauseArmIndex=0; prev2=prev1=0; signalAmp=260; bpm=0;
         esv=esa=pauses=af=tachy=brady=runs=eventCount=artifactRejected=beatCount=0;qualityEligibleSamples=qualityGoodSamples=0;
         bradySince=tachySince=abruptTachyUntil=regularTachyDetectedUntil=-1;lastMorphologyScore=0;cooldown.clear();
+        motionWindows.clear();motionAvailable=haveAcceleration=false;lastAx=lastAy=lastAz=0;motionEnergy=0;motionBadUntilMs=lastTimestampMs=0;
+    }
+
+    /** Ajoute un échantillon accéléromètre H10 en milli-g. Une secousse ouvre une quarantaine temporelle. */
+    public void pushMotion(int xMg,int yMg,int zMg,long timestampMs) {
+        motionAvailable=true;
+        if(!haveAcceleration){lastAx=xMg;lastAy=yMg;lastAz=zMg;haveAcceleration=true;return;}
+        double dx=xMg-lastAx,dy=yMg-lastAy,dz=zMg-lastAz;
+        double jerk=Math.sqrt(dx*dx+dy*dy+dz*dz);
+        double magnitude=Math.sqrt((double)xMg*xMg+(double)yMg*yMg+(double)zMg*zMg);
+        motionEnergy=.84*motionEnergy+.16*jerk;
+        lastAx=xMg;lastAy=yMg;lastAz=zMg;
+        if(jerk>=115||motionEnergy>=42||Math.abs(magnitude-1000)>=240){
+            addMotionWindow(timestampMs-450,timestampMs+1800);
+            motionBadUntilMs=Math.max(motionBadUntilMs,timestampMs+1800);
+            pauseArmIndex=Math.max(pauseArmIndex,index+FS*2L);
+            bradySince=tachySince=-1;
+        }
     }
 
     public float push(int rawUv, long timestampMs) {
+        lastTimestampMs=timestampMs;
         index++;
         raw.put(index,rawUv);
         int clipped=Math.max(-2500, Math.min(2500, rawUv));
@@ -105,19 +141,21 @@ public final class EcgEngine {
         filtered.put(index, (float)y);
         sqi.push(rawUv,clipped,(float)y,index);
         if(sqi.artifactAt==index){pauseArmIndex=index+FS*2L;bradySince=tachySince=-1;}
-        if(index>=FS*4L){qualityEligibleSamples++;if(sqi.good(index))qualityGoodSamples++;}
+        if(index>=FS*4L){qualityEligibleSamples++;if(sqi.good(index)&&!motionAt(timestampMs))qualityGoodSamples++;}
         double a=Math.abs(y);
         if (prev1>prev2 && prev1>=a) considerPeak(index-1, prev1, timestampMs);
         prev2=prev1; prev1=a;
         checkPause(timestampMs);
         checkRateEpisodes(timestampMs);
+        if(index%8==0)classifyPending();
         return (float)y;
     }
 
     public Snapshot snapshot() {
         double[] hrv=hrv();
         double quality=qualityEligibleSamples==0?0:100.0*qualityGoodSamples/qualityEligibleSamples;
-        return new Snapshot(bpm,esv,esa,pauses,af,tachy,brady,runs,beatCount,eventCount,sqi.good(index),index+1,
+        boolean moving=motionAt(lastTimestampMs);
+        return new Snapshot(bpm,esv,esa,pauses,af,tachy,brady,runs,beatCount,eventCount,sqi.good(index)&&!moving,motionAvailable,moving,index+1,
                 morphologyModel.normalCount(),morphologyModel.confirmedCount(),morphologyModel.artifactCount(),artifactRejected,
                 morphologyModel.isReady(),lastMorphologyScore,morphologyModel.threshold(),hrv[0],hrv[1],quality);
     }
@@ -139,7 +177,7 @@ public final class EcgEngine {
 
     private void addBeat(long at, long timeMs) {
         double base=normalRr.isEmpty()?0:medianTail(normalRr,9);
-        Beat b=new Beat(at,timeMs,base,sqi.good(at));
+        Beat b=new Beat(at,timeMs,base,sqi.good(at)&&!motionAt(timeMs));
         if(!beats.isEmpty()) {
             double rr=(at-beats.get(beats.size()-1).index)*1000.0/FS;
             b.rr=rr; rrHistory.add(rr); trim(rrHistory,80);
@@ -153,10 +191,10 @@ public final class EcgEngine {
         checkIrregularRhythm();
     }
 
-    /** Attend 500 ms de signal après le complexe : le modèle 1 s n'est ainsi jamais contourné lors de RR courts. */
+    /** Attend 1,2 s afin d'observer la récupération du signal et les paquets mouvement arrivés après le QRS. */
     private void classifyPending(){
-        if(beats.size()<3)return;int from=Math.max(1,beats.size()-8);
-        for(int i=from;i<beats.size()-1;i++){Beat cur=beats.get(i);if(!cur.classified&&index-cur.index>=FS/2L)classifyAt(i);}
+        if(beats.size()<3)return;int from=Math.max(1,beats.size()-12);
+        for(int i=from;i<beats.size()-1;i++){Beat cur=beats.get(i);if(!cur.classified&&index-cur.index>=DECISION_DELAY_SAMPLES)classifyAt(i);}
     }
 
     private void classifyAt(int position) {
@@ -170,7 +208,8 @@ public final class EcgEngine {
         cur.morphology=extractMorphology(cur.index);
         MorphologyModel.Result morph=morphologyModel.evaluate(cur.morphology);
         lastMorphologyScore=morph.score;
-        if(!morphologyPlausible(cur.index,cur.width)||morph.artifact){
+        LocalQuality quality=localQuality(cur.index);
+        if(motionAt(cur.timeMs)||!morphologyPlausible(cur.index,cur.width)||!quality.dualQrs||quality.artifact||morph.artifact){
             cur.label='?';artifactRejected++;checkPatterns(cur);return;
         }
         if(cur.index<=abruptTachyUntil&&prem<.72&&pauseRatio<.82&&comp<1.55&&(!morph.ready||!morph.anomaly)){
@@ -188,8 +227,10 @@ public final class EcgEngine {
             if(morph.ready&&!morph.anomaly){cur.label='?';emit("WIDE_PREMATURE","Battement prématuré à vérifier",detail+" • forme proche de ton rythme habituel",cur.index,cur.timeMs,0,8_000,cur.morphology,morph);}
             else{cur.label='V';esv++;emit("ESV","Extrasystole ventriculaire possible",detail,cur.index,cur.timeMs,1,8_000,cur.morphology,morph);}
         } else if(cur.width>=115){
-            cur.label=morph.ready&&morph.anomaly?'V':'?';if(cur.label=='V')esv++;
-            emit("WIDE_PREMATURE", "Battement prématuré large à vérifier", detail+" • pause compensatrice non démontrée",cur.index,cur.timeMs,0,8_000,cur.morphology,morph);
+            if(morph.ready&&morph.anomaly&&quality.excellent){
+                cur.label='V';esv++;
+                emit("WIDE_PREMATURE", "Battement prématuré large à vérifier", detail+" • pause compensatrice non démontrée",cur.index,cur.timeMs,0,8_000,cur.morphology,morph);
+            }else{cur.label='?';artifactRejected++;}
         } else if(cur.width<100&&pauseRatio>1.08&&(!morph.ready||!morph.anomaly)){
             cur.label='A'; esa++; emit("ESA", "Extrasystole auriculaire possible", detail, cur.index,cur.timeMs,1,8_000,cur.morphology,morph);
         } else {
@@ -225,14 +266,14 @@ public final class EcgEngine {
     }
 
     private void checkPause(long timeMs) {
-        if(beats.size()<4||!sqi.good(index)||!sqi.cleanFor(index,FS*2L)||lastR<0)return;
+        if(beats.size()<4||!sqi.good(index)||motionAt(timeMs)||!sqi.cleanFor(index,FS*2L)||lastR<0)return;
         double gap=(index-Math.max(lastR,pauseArmIndex))*1000.0/FS;
         if(gap>=2000 && index-lastPauseIndex>FS*5L){lastPauseIndex=index;pauses++;emit("PAUSE","Pause possible",
                 String.format(Locale.FRANCE,"Aucun QRS détecté depuis %.2f s sur signal stable.",gap/1000),index,timeMs,2,30_000);}
     }
 
     private void checkRateEpisodes(long timeMs) {
-        if(!sqi.good(index)||bpm==0)return;
+        if(!sqi.good(index)||motionAt(timeMs)||bpm==0)return;
         if(bpm<40){if(bradySince<0)bradySince=index;if(index-bradySince>=FS*10L){brady++;emit("BRADY","Bradycardie prolongée possible",bpm+" bpm pendant au moins 10 s.",index,timeMs,2,300_000);bradySince=index;}}
         else bradySince=-1;
         if(bpm>150){if(tachySince<0)tachySince=index;if(index-tachySince>=FS*10L&&index>regularTachyDetectedUntil){tachy++;emit("TACHY","Tachycardie prolongée possible",bpm+" bpm pendant au moins 10 s.",index,timeMs,2,180_000);tachySince=index;}}
@@ -246,7 +287,7 @@ public final class EcgEngine {
     }
 
     private void checkIrregularRhythm() {
-        if(beats.size()<28||!sqi.good(index)||index<=abruptTachyUntil)return;
+        if(beats.size()<28||!sqi.good(index)||motionAt(lastTimestampMs)||index<=abruptTachyUntil)return;
         long cutoff=index-FS*30L;ArrayList<Double> r=new ArrayList<>();int ectopic=0;
         for(int i=1;i<beats.size();i++){Beat b=beats.get(i);if(b.index>=cutoff&&b.rr>=300&&b.rr<=1800){r.add(b.rr);if(b.label=='V'||b.label=='A')ectopic++;}}
         if(r.size()<25||ectopic>2)return;
@@ -286,6 +327,48 @@ public final class EcgEngine {
             int value=raw.get(i);maxAbs=Math.max(maxAbs,Math.abs(value));maxStep=Math.max(maxStep,Math.abs(value-previous));previous=value;
         }
         return maxAbs<6000&&maxStep<3200;
+    }
+
+    /** Qualité locale centrée sur l'événement, indépendante de la moyenne de toute la session. */
+    private LocalQuality localQuality(long peak){
+        ArrayList<Double> pre=new ArrayList<>(),post=new ArrayList<>();
+        for(long i=peak-58;i<=peak-35;i++)pre.add((double)raw.get(i));
+        for(long i=peak+38;i<=peak+61;i++)post.add((double)raw.get(i));
+        double preBase=median(pre),postBase=median(post),baselineShift=Math.abs(postBase-preBase);
+        int maxAbs=0,maxStep=0,clipped=0,previous=raw.get(peak-70);
+        double insideEnergy=0,outsideEnergy=0,qrsAmp=0,quietMin=Double.MAX_VALUE,quietMax=-Double.MAX_VALUE;
+        for(long i=peak-69;i<=peak+70;i++){
+            int value=raw.get(i),step=Math.abs(value-previous);previous=value;
+            maxAbs=Math.max(maxAbs,Math.abs(value));maxStep=Math.max(maxStep,step);if(Math.abs(value)>=2450)clipped++;
+            long distance=Math.abs(i-peak);
+            if(distance<=26)insideEnergy+=step;else if(distance<=70)outsideEnergy+=step;
+            if(distance<=26)qrsAmp=Math.max(qrsAmp,Math.abs(filtered.get(i)));
+            if(distance>=45){quietMin=Math.min(quietMin,value);quietMax=Math.max(quietMax,value);}
+        }
+        double outsideRatio=outsideEnergy/Math.max(1,insideEnergy);
+        double quietRange=Math.max(0,quietMax-quietMin);
+        boolean dualQrs=qrsAmp>=75&&insideEnergy>=Math.max(260,outsideEnergy*.55);
+        boolean artifact=maxAbs>=6000||maxStep>=3200||clipped>8
+                ||baselineShift>Math.max(320,qrsAmp*.72)
+                ||quietRange>Math.max(1500,qrsAmp*1.8)
+                ||outsideRatio>1.55;
+        boolean excellent=!artifact&&clipped==0&&baselineShift<Math.max(170,qrsAmp*.35)&&outsideRatio<.62;
+        return new LocalQuality(artifact,dualQrs,excellent,baselineShift,outsideRatio);
+    }
+
+    private void addMotionWindow(long fromMs,long toMs){
+        if(!motionWindows.isEmpty()){
+            MotionWindow last=motionWindows.get(motionWindows.size()-1);
+            if(fromMs<=last.toMs+250){last.toMs=Math.max(last.toMs,toMs);pruneMotion(toMs);return;}
+        }
+        motionWindows.add(new MotionWindow(fromMs,toMs));pruneMotion(toMs);
+    }
+
+    private void pruneMotion(long nowMs){while(motionWindows.size()>1&&motionWindows.get(0).toMs<nowMs-30_000)motionWindows.remove(0);}
+    private boolean motionAt(long timestampMs){
+        if(!motionAvailable)return false;
+        for(int i=motionWindows.size()-1;i>=0;i--){MotionWindow w=motionWindows.get(i);if(timestampMs>w.toMs)break;if(timestampMs>=w.fromMs)return true;}
+        return timestampMs<=motionBadUntilMs&&timestampMs>=motionBadUntilMs-2250;
     }
 
     /** RMSSD et SDNN sur les intervalles NN propres des cinq dernières minutes environ. */
