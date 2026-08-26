@@ -12,6 +12,12 @@ Développé par **Mattéo Leroy**.
 - surveillance en service de premier plan avec reconnexion automatique ;
 - détection de battements prématurés, pauses et rythmes durablement rapides, lents ou irréguliers ;
 - historique local des passages détectés ;
+- menu Adaptive Twin avec bilan matinal guidé, référence personnelle FC/VFC et recommandation de charge explicable ;
+- modèle dose-réponse local apprenant le lien entre état du matin, charge observée, effort perçu et réponse du lendemain ;
+- passeport de fiabilité comparant l’erreur du modèle à la prévision naïve avant d’autoriser les prévisions ML ;
+- expériences personnelles facultatives et associations affichées avec leurs nombres de journées comparables ;
+- contexte local sommeil, stress, fatigue, symptômes, alcool et entraînement récent ;
+- courbes de tendance sur 30 bilans et niveau de confiance dépendant de la quantité de données comparables ;
 - navigation supérieure compatible avec les boutons et gestes système Android ;
 - barrière anti-contact, qualité locale et décision retardée de 1,2 seconde avant toute alerte ;
 - profil morphologique personnel avec prototypes séparés pour les anomalies et les artefacts confirmés ;
@@ -36,6 +42,18 @@ Avant qu’un événement ne soit enregistré, le moteur attend 1,2 seconde puis
 
 Ce modèle est un détecteur statistique adaptatif compact, pas un réseau neuronal générique. Son état reste stocké sur le téléphone et peut être réinitialisé depuis les réglages.
 
+## Adaptive Twin
+
+Le bilan Adaptive Twin analyse une fenêtre dédiée de trois minutes au calme. Les trente premières secondes sont réservées à la stabilisation. Les intervalles associés à des battements non normaux, au mouvement ou à un signal insuffisant sont exclus ; un bilan contenant moins de 90 intervalles propres ou moins de 80 % de signal exploitable n’est pas enregistré.
+
+Après plusieurs bilans comparables, l’application construit une référence personnelle robuste puis apprend la relation entre l’état du matin, la charge enregistrée jusqu’au bilan suivant et la réponse physiologique observée. L’effort perçu renseigné après une séance ajuste la charge lorsque la fréquence cardiaque seule ne décrit pas correctement l’effort.
+
+Le petit modèle régularisé est réentraîné localement à partir de l’historique. Ses prévisions sont testées dans l’ordre chronologique : elles restent masquées tant qu’au moins 21 transitions propres ne sont pas disponibles et que leur erreur n’est pas inférieure à celle de la règle « demain ressemble à aujourd’hui ». Dans le cas contraire, une fourchette prudente issue des règles explicables est affichée. Le passeport du modèle indique toujours les données disponibles, les erreurs comparées et l’incertitude.
+
+Les associations liées au sommeil, au stress, à la fatigue, à l’alcool ou aux séances difficiles ne sont affichées qu’avec leurs effectifs. Une expérience personnelle facultative peut comparer des nuits où un objectif a été respecté ou non. Ces résultats décrivent des associations individuelles ; ils ne prouvent pas une causalité, ne prédisent pas une maladie et ne constituent pas un diagnostic.
+
+Les minutes en zones sont estimées seulement pendant le port de la H10, à partir de la réserve cardiaque et d’un signal propre. Elles ne mesurent donc pas la sédentarité sur toute la journée. Les repères affichés suivent les recommandations générales de l’OMS pour les adultes : 150 à 300 minutes d’activité modérée, ou 75 à 150 minutes soutenues, avec du renforcement au moins deux jours par semaine.
+
 ## Compilation
 
 Prérequis : Android SDK 35 et JDK 17.
@@ -48,7 +66,7 @@ Pour une publication, créez votre propre clé de signature, copiez `keystore.pr
 
 ## Données
 
-Les rapports sont enregistrés dans `Documents/PolarH10Monitor`. L’historique continu brut est conservé dans l’espace privé de l’application pendant 24 heures. Aucune donnée n’est transférée automatiquement.
+Les rapports sont enregistrés dans `Documents/PolarH10Monitor`. L’historique continu brut est conservé dans l’espace privé de l’application pendant 24 heures. Adaptive Twin, ses bilans, ses retours et ses coefficients restent dans l’espace privé de l’application et disposent d’une remise à zéro indépendante. Aucune donnée n’est transférée automatiquement.
 
 Consultez [PRIVACY.md](PRIVACY.md) pour le détail.
 

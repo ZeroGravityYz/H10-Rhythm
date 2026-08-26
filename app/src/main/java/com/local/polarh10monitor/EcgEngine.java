@@ -60,6 +60,13 @@ public final class EcgEngine {
         }
     }
 
+    /** Mesures propres à une fenêtre, utilisées uniquement par le bilan matinal guidé. */
+    public static final class FitnessMetrics {
+        public final double restingHr,rmssdMs,sdnnMs,beatQualityPercent;
+        public final int nnCount;
+        FitnessMetrics(double restingHr,double rmssdMs,double sdnnMs,double beatQualityPercent,int nnCount){this.restingHr=restingHr;this.rmssdMs=rmssdMs;this.sdnnMs=sdnnMs;this.beatQualityPercent=beatQualityPercent;this.nnCount=nnCount;}
+    }
+
     private static final class Beat {
         long index, timeMs; double rr, baseline, width; boolean clean,modelObserved,classified; char label='N';float[] morphology;
         Beat(long index, long timeMs, double baseline, boolean clean) {
@@ -158,6 +165,17 @@ public final class EcgEngine {
         return new Snapshot(bpm,esv,esa,pauses,af,tachy,brady,runs,beatCount,eventCount,sqi.good(index)&&!moving,motionAvailable,moving,index+1,
                 morphologyModel.normalCount(),morphologyModel.confirmedCount(),morphologyModel.artifactCount(),artifactRejected,
                 morphologyModel.isReady(),lastMorphologyScore,morphologyModel.threshold(),hrv[0],hrv[1],quality);
+    }
+
+    public FitnessMetrics fitnessMetricsSince(long sinceSample){
+        ArrayList<Double> nn=new ArrayList<>(),heartRates=new ArrayList<>();int eligible=0;
+        for(int i=1;i<beats.size()-1;i++){
+            Beat beat=beats.get(i);if(beat.index<sinceSample||beat.rr<300||beat.rr>2000)continue;eligible++;
+            if(beat.clean&&beat.label=='N'){nn.add(beat.rr);heartRates.add(60000.0/beat.rr);}
+        }
+        if(nn.size()<10)return new FitnessMetrics(0,0,0,eligible==0?0:100.0*nn.size()/eligible,nn.size());
+        double mean=mean(nn),squares=0;for(int i=1;i<nn.size();i++)squares+=Math.pow(nn.get(i)-nn.get(i-1),2);
+        return new FitnessMetrics(median(heartRates),Math.sqrt(squares/(nn.size()-1)),std(nn,mean),eligible==0?0:100.0*nn.size()/eligible,nn.size());
     }
 
     private void considerPeak(long peak, double amp, long timestampMs) {

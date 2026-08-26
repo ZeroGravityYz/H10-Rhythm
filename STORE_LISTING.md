@@ -6,13 +6,15 @@ H10 Rhythm
 
 ## Description courte
 
-Visualisez l’ECG de votre Polar H10 et conservez les passages inhabituels.
+Suivez votre ECG et apprenez votre réponse personnelle à l’entraînement avec votre Polar H10.
 
 ## Description complète
 
 H10 Rhythm se connecte directement à une ceinture Polar H10 pour afficher son signal ECG en temps réel et poursuivre la surveillance lorsque l’écran est éteint.
 
 L’application apprend progressivement la forme habituelle de vos battements. Lorsqu’un passage mérite une vérification, elle conserve le contexte avant et après l’événement, puis prépare un rapport PDF accompagné des données brutes.
+
+Adaptive Twin construit une référence personnelle à partir de bilans matinaux standardisés, apprend la relation entre charge d’entraînement et réponse du lendemain, puis affiche une fourchette prudente et ses facteurs. Une prévision ML reste masquée tant qu’elle n’a pas mieux fonctionné qu’une comparaison simple sur l’historique personnel. Ces informations décrivent des tendances non spécifiques et ne prédisent aucune maladie.
 
 Fonctions principales :
 
@@ -21,6 +23,9 @@ Fonctions principales :
 - connexion Bluetooth directe et reconnexion automatique ;
 - analyse locale sans compte ni serveur ;
 - historique clair des passages enregistrés ;
+- bilan matinal guidé et référence personnelle calculée localement ;
+- tendances FC de repos et VFC, état de récupération expliqué et niveau de confiance ;
+- estimation du temps cardiaque en zones modérée et soutenue ;
 - rapports PDF et export des données brutes ;
 - modèle morphologique personnel conservé sur le téléphone et corrections utilisateur réversibles ;
 - surveillance possible lorsque l’écran est éteint.

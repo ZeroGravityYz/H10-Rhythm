@@ -1,6 +1,6 @@
 H10 RHYTHM — INSTALLATION SANS ANDROID STUDIO
 
-1. Télécharge H10_Rhythm_v2.6.1_test.apk depuis la dernière publication GitHub, puis copie-le sur le téléphone Android.
+1. Télécharge H10_Rhythm_v3.0.1_test.apk depuis la dernière publication GitHub, puis copie-le sur le téléphone Android.
 2. Ouvre le fichier puis autorise temporairement l’installation d’applications inconnues pour l’application Fichiers.
 3. Lance H10 Rhythm et accepte « Appareils à proximité » et « Notifications ».
 4. Porte la ceinture, humidifie ses électrodes et ferme Polar Beat / Polar Flow.

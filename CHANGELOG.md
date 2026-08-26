@@ -1,5 +1,40 @@
 # Historique des versions
 
+## 3.1.0-test
+
+- remplacement du menu Forme par **Adaptive Twin**, centré sur une fourchette de charge, une prévision du lendemain et l’explication de chaque facteur plutôt que sur un score opaque ;
+- nouveau modèle local dose-réponse entraîné sur les transitions entre deux bilans matinaux propres et les charges H10 réellement observées ;
+- validation chronologique obligatoire : l’indication « ML actif » reste masquée jusqu’à au moins 21 transitions et jusqu’à ce que le modèle batte la référence naïve « demain ressemble à aujourd’hui » ;
+- passeport du modèle avec nombre d’exemples, prévisions testées, erreur du modèle, erreur de référence, confiance et état d’apprentissage ;
+- estimation d’incertitude et repli automatique vers une recommandation prudente lorsque l’historique ne permet pas une prévision fiable ;
+- traduction de la charge en proposition compréhensible selon l’activité principale, avec limites explicites pour la musculation ;
+- retour d’effort perçu de 1 à 10 après une séance afin de corriger ce que la fréquence cardiaque seule ne mesure pas ;
+- apprentissage des associations personnelles avec le sommeil, le stress, la fatigue musculaire, l’alcool et les séances difficiles, avec effectifs visibles ;
+- expérience personnelle facultative « coucher 30 minutes plus tôt » sur 12 nuits, dont le résultat reste masqué avant trois journées dans chaque groupe ;
+- coefficients, retours, expériences et bilans stockés exclusivement sur le téléphone et effaçables avec Adaptive Twin.
+
+## 3.0.1-test
+
+- formulaire de profil remplacé par une fenêtre redimensionnable avec contenu défilant et boutons Annuler / Enregistrer toujours visibles au-dessus du clavier ;
+- chaque champ explique désormais son rôle réel dans les calculs ;
+- choix du sexe transformé en sélecteur : il reste un contexte facultatif et n’influence pas artificiellement la récupération personnalisée ;
+- activité, ancienneté et renforcement contribuent au profil de condition ; âge et traitement influençant la FC sont appliqués seulement là où ils sont pertinents ;
+- objectif utilisé pour contextualiser les conseils de reprise, endurance, gestion du poids ou force ;
+- graphique de tendance redessiné avec vraies légendes pleines, points lisibles et états dédiés avant un ou deux bilans.
+
+## 3.0.0-test
+
+- nouveau menu **Forme** séparé de la surveillance ECG et de l’historique des alertes ;
+- profil local comprenant âge, taille, poids, habitudes d’activité, renforcement, expérience sportive, objectif et traitements influençant la fréquence cardiaque ;
+- bilan matinal guidé de trois minutes, avec stabilisation initiale, exclusion des battements non normaux et rejet automatique des mesures trop bruitées ;
+- référence physiologique personnelle robuste sur 60 jours, fondée sur la médiane et l’écart absolu médian de la FC de repos et du lnRMSSD ;
+- cinq états de récupération expliqués point par point, avec niveau de confiance dépendant du nombre de bilans comparables ;
+- profil de condition progressif qui combine activité habituelle, temps cardiaque observé, ancienneté d’entraînement et historique propre sans conclure à un « cœur d’athlète » ;
+- estimation locale des minutes en zones modérée et soutenue, tendances FC/VFC sur 30 bilans et repères d’activité de l’OMS ;
+- contexte quotidien sommeil, stress, fatigue musculaire, symptômes, alcool et séance difficile pour éviter de confondre un signal non spécifique avec une maladie ;
+- aperçu de l’état de forme sur l’accueil, explication « Pourquoi ce résultat ? », conseils prudents et remise à zéro indépendante des données Forme ;
+- aucune donnée de profil ou de récupération ne quitte le téléphone.
+
 ## 2.6.1-test
 
 - correction de la lecture de batterie H10 : elle est désormais retardée, retentée automatiquement et vérifiée périodiquement sans bloquer le flux ECG ou le capteur de mouvement ;
