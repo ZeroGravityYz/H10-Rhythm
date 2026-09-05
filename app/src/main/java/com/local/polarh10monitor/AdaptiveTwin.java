@@ -32,43 +32,43 @@ public final class AdaptiveTwin {
         ArrayList<FitnessInsights.Morning> mornings=new ArrayList<>();
         for(FitnessInsights.Morning m:FitnessInsights.mornings(context))if(valid(m))mornings.add(m);
         mornings.sort(Comparator.comparingLong(m->m.timestampMs));
-        Baseline baseline=Baseline.from(mornings);
+        Baseline baseline=Baseline.from(mornings.subList(0,Math.max(0,mornings.size()-1)));
         ArrayList<Sample> samples=new ArrayList<>();
         List<SessionHistory.Record> sessions=SessionHistory.list(context);Map<Long,SessionRating> ratings=ratings(context);
         for(int i=0;i+1<mornings.size();i++){
             FitnessInsights.Morning from=mornings.get(i),to=mornings.get(i+1);
             long gap=to.timestampMs-from.timestampMs;
             if(gap<18L*3_600_000L||gap>42L*3_600_000L)continue;
-            double load=loadBetween(sessions,ratings,from.timestampMs,to.timestampMs);
-            double state=baseline.state(from),target=baseline.state(to);
+            double load=TrainingJournal.loadBetween(context,from.timestampMs,to.timestampMs);if(!Double.isFinite(load)||load>180||i<7)continue;
+            Baseline past=Baseline.from(mornings.subList(Math.max(0,i-60),i));double state=past.state(from),target=past.state(to);
             samples.add(new Sample(features(from,state,load),target,state,load));
         }
 
         Evaluation evaluation=evaluate(samples);
         LinearModel model=LinearModel.fit(samples);
-        boolean enough=samples.size()>=21&&evaluation.count>=10;
-        boolean reliable=enough&&evaluation.mae+.04<evaluation.naiveMae&&model!=null;
+        ForecastLedger.Score prospective=ForecastLedger.score(context);
+        boolean reliable=samples.size()>=21&&prospective.ready&&model!=null;
         FitnessInsights.Morning current=summary.hasToday?summary.current:null;
         double currentState=current==null?0:baseline.state(current);
         Dose dose=chooseDose(summary,current,currentState,model,reliable,evaluation);
-        int confidence=confidence(samples.size(),evaluation,reliable);
-        String stage=samples.size()<4?"Collecte initiale":samples.size()<21?"Apprentissage personnel":reliable?"Prévision validée":"Modèle en vérification";
+        int confidence=0;
+        String stage=samples.size()<4?"Collecte initiale":samples.size()<21?"Apprentissage personnel":reliable?"Estimations disponibles":"Modèle en vérification";
         String status;
         if(samples.size()<4)status="Il faut encore des bilans effectués à des jours différents pour apprendre ta réponse.";
         else if(samples.size()<21)status="Le modèle apprend sur "+samples.size()+" transition(s) entre deux matins propres. Il en faut au moins 21 avant d'autoriser une prévision ML.";
-        else if(reliable)status="Le modèle personnel prédit mieux que la référence naïve sur les journées déjà observées.";
-        else status="Le modèle n'est pas encore meilleur qu'une prévision simple : ses conseils restent prudents et non-ML.";
+        else if(reliable)status="Les prévisions enregistrées à l’avance ont une erreur inférieure aux deux références simples.";
+        else status="Les estimations restent en évaluation. Il faut 20 prévisions enregistrées à l’avance et meilleures que les références.";
 
         ArrayList<String> factors=factors(summary,current,currentState,dose);
         ArrayList<Driver> drivers=drivers(mornings,baseline);
         String experiment=experimentText(experiment(context),drivers,mornings,baseline);
         persist(context,samples.size(),evaluation,reliable,confidence,model);
-        return new Report(stage,status,reliable,samples.size(),evaluation.count,confidence,evaluation.mae,
-                evaluation.naiveMae,dose.low,dose.high,dose.title,dose.detail,dose.forecast,
+        return new Report(stage,status,reliable,samples.size(),prospective.count,confidence,prospective.mae,
+                Math.min(prospective.naive,prospective.recent),dose.low,dose.high,dose.title,dose.detail,dose.forecast,
                 dose.interval,factors,drivers,experiment,currentState);
     }
 
-    public static void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().clear().apply();}
+    public static void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().clear().apply();LocalRepository.get(context).clear("forecast");LocalRepository.get(context).clear("experiment");}
 
     public static SessionHistory.Record latestSessionToRate(Context context){
         Map<Long,SessionRating> saved=ratings(context);long cutoff=System.currentTimeMillis()-7L*86_400_000L;
@@ -81,13 +81,15 @@ public final class AdaptiveTwin {
         ArrayList<SessionRating> ordered=new ArrayList<>(all.values());ordered.sort(Comparator.comparingLong((SessionRating r)->r.sessionStart).reversed());
         JSONArray array=new JSONArray();for(int i=0;i<Math.min(180,ordered.size());i++)array.put(ordered.get(i).json());
         context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(RATINGS,array.toString()).apply();
+        for(SessionHistory.Record session:SessionHistory.list(context))if(session.startMs==sessionStart){int minutes=(int)Math.max(1,Math.min(1440,(session.endMs-session.startMs)/60000));TrainingJournal.add(context,"h10_"+sessionStart,sessionStart,FitnessInsights.profile(context).sport.isEmpty()?"Séance H10":FitnessInsights.profile(context).sport,minutes,rpe,completed);break;}
     }
 
-    public static ExperimentState experiment(Context context){try{return ExperimentState.from(new JSONObject(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(EXPERIMENT,"{}")));}catch(Exception ignored){return new ExperimentState("","",0,false);}}
+    public static ExperimentState experiment(Context context){try{ExperimentState state=ExperimentState.from(new JSONObject(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(EXPERIMENT,"{}")));if(state.active&&System.currentTimeMillis()-state.startMs>=12L*86400000L){archiveExperiment(context,state);return new ExperimentState(state.id,state.title,state.startMs,false);}return state;}catch(Exception ignored){return new ExperimentState("","",0,false);}}
     public static void startSleepExperiment(Context context){ExperimentState state=new ExperimentState("sleep_earlier_"+System.currentTimeMillis(),"Coucher 30 minutes plus tôt",System.currentTimeMillis(),true);context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(EXPERIMENT,state.json().toString()).apply();}
-    public static void stopExperiment(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(EXPERIMENT).apply();}
+    public static void stopExperiment(Context context){archiveExperiment(context,experiment(context));}
+    private static void archiveExperiment(Context context,ExperimentState state){if(!state.id.isEmpty())LocalRepository.get(context).put("experiment",state.id,state.startMs,new ExperimentState(state.id,state.title,state.startMs,false).json());context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(EXPERIMENT).apply();}
 
-    private static boolean valid(FitnessInsights.Morning m){return m!=null&&m.quality>=80&&m.nnCount>=90&&m.restingHr>25&&m.rmssd>2;}
+    private static boolean valid(FitnessInsights.Morning m){return m!=null&&m.continuityVerified&&m.quality>=80&&m.nnCount>=90&&m.restingHr>25&&m.rmssd>2;}
 
     private static double[] features(FitnessInsights.Morning m,double state,double load){
         double l=Math.min(2.5,Math.max(0,load/60.0));
@@ -109,37 +111,43 @@ public final class AdaptiveTwin {
     private static Map<Long,SessionRating> ratings(Context context){HashMap<Long,SessionRating> out=new HashMap<>();try{JSONArray a=new JSONArray(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(RATINGS,"[]"));for(int i=0;i<a.length();i++){SessionRating r=SessionRating.from(a.getJSONObject(i));out.put(r.sessionStart,r);}}catch(Exception ignored){}return out;}
 
     private static Evaluation evaluate(List<Sample> samples){
-        double error=0,naive=0;int count=0;
+        double error=0,naive=0,squared=0;int count=0;
         for(int i=6;i<samples.size();i++){
             LinearModel m=LinearModel.fit(samples.subList(0,i));if(m==null)continue;
             Sample s=samples.get(i);double prediction=m.predict(s.x);
-            error+=Math.abs(prediction-s.y);naive+=Math.abs(s.previousState-s.y);count++;
+            squared+=Math.pow(prediction-s.y,2);error+=Math.abs(prediction-s.y);naive+=Math.abs(s.previousState-s.y);count++;
         }
         double mae=count==0?0:error/count,naiveMae=count==0?0:naive/count;
-        double residual=0;int residualCount=0;LinearModel all=LinearModel.fit(samples);
-        if(all!=null)for(Sample s:samples){double d=s.y-all.predict(s.x);residual+=d*d;residualCount++;}
-        return new Evaluation(count,mae,naiveMae,residualCount<2?1:Math.sqrt(residual/(residualCount-FEATURES>1?residualCount-FEATURES:residualCount)));
+        return new Evaluation(count,mae,naiveMae,count==0?1:Math.sqrt(squared/count));
     }
 
     private static Dose chooseDose(FitnessInsights.Summary summary,FitnessInsights.Morning current,double state,LinearModel model,boolean reliable,Evaluation eval){
-        if(current==null)return new Dose(0,0,"Mesure nécessaire","Réalise le bilan matinal avant de choisir une charge.","Aucune prévision aujourd'hui.","");
-        if(current.symptoms)return new Dose(0,20,"Repos ou activité très légère","Des symptômes ont été déclarés : le modèle ne propose pas de séance soutenue.","Réponse de demain non estimée en présence de symptômes.","Décision de sécurité");
-        int conservativeHigh=state<-.9||current.stress>=4||current.soreness>=4?30:state<-.35?45:65;
-        int conservativeLow=Math.max(0,conservativeHigh-25);
-        if(!reliable||model==null){
-            String detail=(state<-.9?"La réponse du jour est sous ta plage habituelle. ":"Fourchette prudente pendant que le modèle vérifie ses prédictions. ")+planFor(summary.profile,conservativeLow,conservativeHigh);
-            return new Dose(conservativeLow,conservativeHigh,"Charge prudente",detail,"Prévision ML masquée tant qu'elle ne bat pas la référence naïve.","Apprentissage en cours");
-        }
-        int bestHigh=15;double bestPrediction=-9;
-        for(int load=0;load<=120;load+=5){double predicted=model.predict(features(current,state,load));double lower=predicted-1.28*Math.max(.25,eval.rmse);if(lower>=-.85){bestHigh=load;bestPrediction=predicted;}}
-        bestHigh=Math.min(bestHigh,Math.max(25,conservativeHigh+25));int low=Math.max(0,bestHigh-25);
-        double predicted=model.predict(features(current,state,(low+bestHigh)/2.0));double margin=1.28*Math.max(.25,eval.rmse);
-        String response=predicted<-.65?"probablement sous ta plage habituelle":predicted>.65?"probablement au-dessus de ta plage habituelle":"probablement proche de ta plage habituelle";
-        String interval=String.format(Locale.FRANCE,"intervalle personnel %.1f à %.1f",predicted-margin,predicted+margin);
-        return new Dose(low,bestHigh,"Dose personnelle",planFor(summary.profile,low,bestHigh),"Avec cette charge, la réponse de demain est "+response+".",interval);
+        if(current==null)return new Dose(0,0,"Ton bilan du jour","Trois minutes au calme pour retrouver tes repères.","Aucune estimation sans mesure récente.","");
+        if(current.symptoms)return new Dose(0,0,"Écoute tes symptômes","Reporte la comparaison de séances. Demande un avis médical selon les symptômes.","Estimation suspendue.","");
+        return new Dose(0,0,"Comparer tes séances","Choisis une séance dans ton journal pour explorer les réponses observées.","Aucune durée idéale n’est calculée automatiquement.",reliable?"Estimations personnelles disponibles":"Apprentissage en cours");
     }
-
-    private static String planFor(FitnessInsights.Profile profile,int low,int high){String sport=profile.sport.toLowerCase(Locale.ROOT);if(high<=20)return "Repos, marche tranquille ou mobilité selon tes sensations.";if(sport.contains("course")||sport.contains("running"))return low+" à "+high+" min de course majoritairement facile ; garde les passages soutenus dans la fourchette affichée.";if(sport.contains("vélo")||sport.contains("velo")||sport.contains("cycl"))return Math.max(20,low+10)+" à "+(high+20)+" min de vélo facile à modéré.";if(sport.contains("muscu")||sport.contains("force")||sport.contains("fitness"))return "Séance de "+Math.max(25,low)+" à "+Math.max(40,high)+" min, effort perçu autour de 6/10 ; la note après séance corrigera la charge cardiaque incomplète.";return low+" à "+high+" min d'activité facile à modérée, sans dépasser tes sensations habituelles.";}
+    public static String compare(Context context,double load,boolean record){
+        FitnessInsights.Summary summary=FitnessInsights.summarize(context);FitnessInsights.Morning current=summary.hasToday?summary.current:null;
+        if(current==null||!valid(current))return "Réalise un bilan matinal complet avant de comparer.";
+        if(current.symptoms||summary.profile.hrMedication)return "Comparaison suspendue : symptômes ou traitement influençant la fréquence cardiaque.";
+        ArrayList<FitnessInsights.Morning> all=new ArrayList<>();for(FitnessInsights.Morning m:FitnessInsights.mornings(context))if(valid(m)&&m.timestampMs<=current.timestampMs)all.add(m);
+        all.sort(Comparator.comparingLong(m->m.timestampMs));ArrayList<Sample> samples=new ArrayList<>();ArrayList<Double> loads=new ArrayList<>();
+        Baseline base=Baseline.from(all.subList(Math.max(0,all.size()-61),Math.max(0,all.size()-1)));double state=base.state(current);int neighbors=0;
+        for(int i=7;i+1<all.size();i++){FitnessInsights.Morning from=all.get(i),to=all.get(i+1);long gap=to.timestampMs-from.timestampMs;
+            double l=TrainingJournal.loadBetween(context,from.timestampMs,to.timestampMs);if(gap<18*3600000L||gap>42*3600000L||!Double.isFinite(l)||l>180)continue;
+            Baseline past=Baseline.from(all.subList(Math.max(0,i-60),i));double st=past.state(from);samples.add(new Sample(features(from,st,l),past.state(to),st,l));loads.add(l);
+            if(Math.abs(l-load)<=Math.max(10,load*.2)&&Math.abs(st-state)<=.75&&Math.abs(from.sleepQuality-current.sleepQuality)<=1&&Math.abs(from.stress-current.stress)<=1&&from.symptoms==current.symptoms)neighbors++;
+        }
+        if(loads.isEmpty())return "Renseigne tes séances et confirme les journées complètes. Une journée inconnue n’est pas du repos.";
+        Collections.sort(loads);double min=loads.get(0),max=loads.get(loads.size()-1);
+        if(load<min||load>max||neighbors<5)return neighbors+" situation(s) comparable(s) sur 5 requises. Charge observée : "+Math.round(min)+" à "+Math.round(max)+". Pas d’extrapolation.";
+        LinearModel model=LinearModel.fit(samples);if(model==null)return "Pas encore assez de transitions complètes.";
+        double prediction=model.predict(features(current,state,load)),recent=0;int n=0;for(int i=Math.max(0,all.size()-8);i<all.size()-1;i++){recent+=base.state(all.get(i));n++;}
+        if(record)ForecastLedger.save(context,current,load,prediction,state,n==0?state:recent/n,new double[]{base.hr,base.hrScale,base.logHrv,base.hrvScale});
+        ForecastLedger.Score score=ForecastLedger.score(context);
+        if(samples.size()<21||!score.ready)return (record?"Prévision enregistrée pour évaluation. ":"")+neighbors+" situations comparables · "+score.count+"/20 prévisions évaluées. Résultat masqué pendant la vérification.";
+        return String.format(Locale.FRANCE,"%d situations comparables. Réponse estimée : %.1f, plage empirique %.1f à %.1f (écarts à ta référence). Association observée, pas un effet garanti de la séance.",neighbors,prediction,prediction-score.margin,prediction+score.margin);
+    }
 
     private static ArrayList<String> factors(FitnessInsights.Summary s,FitnessInsights.Morning current,double state,Dose dose){
         ArrayList<String> out=new ArrayList<>();
@@ -151,7 +159,7 @@ public final class AdaptiveTwin {
         if(current.stress>=4)out.add("Stress déclaré élevé aujourd'hui.");
         if(current.soreness>=4)out.add("Fatigue musculaire déclarée élevée.");
         if(current.alcohol)out.add("Alcool récent déclaré : facteur traité séparément dans l'apprentissage.");
-        out.add("Charge proposée : "+dose.low+"–"+dose.high+" minutes équivalentes modérées.");
+        out.add("Consulte le journal et les situations comparables avant de modifier tes habitudes.");
         return out;
     }
 
@@ -181,12 +189,6 @@ public final class AdaptiveTwin {
         for(Driver d:drivers)if(!d.usable&&d.exposed>0)return "Hypothèse à documenter : « "+d.name.toLowerCase(Locale.FRANCE)+" ». Il manque des journées comparables pour savoir si l'association se répète.";
         for(Driver d:drivers)if(d.usable&&Math.abs(d.effect)>=.35)return "À vérifier sur les prochaines semaines : "+d.name.toLowerCase(Locale.FRANCE)+" est "+(d.effect<0?"associé à une réponse moins favorable":"associé à une réponse plus favorable")+". Ce n'est pas encore une preuve de causalité.";
         return "Aucun facteur dominant n'apparaît encore. Le modèle continuera à comparer des journées semblables.";
-    }
-
-    private static int confidence(int samples,Evaluation e,boolean reliable){
-        if(samples<4)return Math.min(20,samples*5);if(!reliable)return Math.min(55,20+samples*2);
-        double gain=e.naiveMae<=0?0:(e.naiveMae-e.mae)/e.naiveMae;
-        return (int)Math.round(Math.min(92,58+Math.min(22,samples)+Math.max(0,12*gain)));
     }
 
     private static void persist(Context context,int samples,Evaluation e,boolean reliable,int confidence,LinearModel model){

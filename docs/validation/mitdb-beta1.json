@@ -1,0 +1,996 @@
+{
+  "protocol": "MIT-BIH v1.0.0 non-paced records; MLII if present; resample_poly to 130 Hz; no annotation supplied to engine; automatic personal baseline; 30 s warm-up, 2 s terminal margin; one-to-one 150 ms matching; ectopic beat labels BEFORE notification cooldown; no threshold adjustment from results",
+  "warning": "External-domain stress test, NOT validation on H10 and NOT certification. Reference classes not fully detectable with these timing rules.",
+  "totals": {
+    "records": 44,
+    "hours": 21.67686324786325,
+    "V": {
+      "tp": 29,
+      "fp": 70,
+      "fn": 6871,
+      "sensitivity": 0.004202898550724638,
+      "ppv": 0.29292929292929293,
+      "false_positives_per_hour": 3.2292495090081865
+    },
+    "S": {
+      "tp": 40,
+      "fp": 109,
+      "fn": 2714,
+      "sensitivity": 0.014524328249818447,
+      "ppv": 0.2684563758389262,
+      "false_positives_per_hour": 5.028402806884176
+    },
+    "qrs_sensitivity": 0.9314460705045278,
+    "qrs_ppv": 0.8516393139646633
+  },
+  "records": [
+    {
+      "record": "100",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2233,
+      "predicted_beats": 2977,
+      "qrs_tp": 1465,
+      "sha256_dat": "b2ea3c250e56e48f4b7b90697832b8ecd1afa1e0bb31f2dcfea4ed6e1075a639",
+      "V": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 7,
+        "reference": 1
+      },
+      "S": {
+        "tp": 3,
+        "fn": 29,
+        "fp": 57,
+        "reference": 32
+      },
+      "unclassified": 1737
+    },
+    {
+      "record": "101",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1829,
+      "predicted_beats": 1803,
+      "qrs_tp": 1801,
+      "sha256_dat": "698d1ea6f472d23ca50317c72c96cda2698badd8578220ed0380cdf241e39006",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 0,
+        "reference": 3
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "103",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2048,
+      "predicted_beats": 2041,
+      "qrs_tp": 2040,
+      "sha256_dat": "f7994f0bd196730779998b4bddf26cb47f396599fb370a08b5cb29a3ac4d555d",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 2,
+        "fp": 0,
+        "reference": 2
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "105",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2529,
+      "predicted_beats": 2507,
+      "qrs_tp": 2373,
+      "sha256_dat": "fcd0153dfea69c749194bb73de7db124588857cfa2f6aecb72754894c8afde02",
+      "V": {
+        "tp": 1,
+        "fn": 38,
+        "fp": 5,
+        "reference": 39
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 1,
+        "reference": 0
+      },
+      "unclassified": 409
+    },
+    {
+      "record": "106",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1991,
+      "predicted_beats": 3085,
+      "qrs_tp": 1983,
+      "sha256_dat": "c017bc18b95b1f970bca143a044ee5d54168648b541e47aa656f2737a59c1202",
+      "V": {
+        "tp": 0,
+        "fn": 519,
+        "fp": 0,
+        "reference": 519
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 4
+    },
+    {
+      "record": "108",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1731,
+      "predicted_beats": 2556,
+      "qrs_tp": 1309,
+      "sha256_dat": "229a4ef62679dc5c6ea781bfbaec2bd784151fc9f9517f4cdecd533a9431eb20",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 4,
+        "fp": 0,
+        "reference": 4
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "109",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2482,
+      "predicted_beats": 2210,
+      "qrs_tp": 2205,
+      "sha256_dat": "267afd6ced7a1fd5a8bcd21fcc2b83287e37e3ef57f32e8a0fe39a6e021951cd",
+      "V": {
+        "tp": 0,
+        "fn": 38,
+        "fp": 0,
+        "reference": 38
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 12
+    },
+    {
+      "record": "111",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2087,
+      "predicted_beats": 2427,
+      "qrs_tp": 2076,
+      "sha256_dat": "8372d98ae59fbfd023502a9d0fc03fb5383083da92584b964484e18593e08485",
+      "V": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 4,
+        "reference": 1
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 602
+    },
+    {
+      "record": "112",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2493,
+      "predicted_beats": 2993,
+      "qrs_tp": 2484,
+      "sha256_dat": "3c7af9758687314255b5d946a58d9509d53ecf2a300230684fa8ecf00b774bdb",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 2,
+        "fp": 0,
+        "reference": 2
+      },
+      "unclassified": 1043
+    },
+    {
+      "record": "113",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1763,
+      "predicted_beats": 3511,
+      "qrs_tp": 1763,
+      "sha256_dat": "f5509b71dabaaa11c53f687ee17aab0071bce3d471e2ab77c71a6434f5b7aacf",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 5,
+        "fp": 0,
+        "reference": 5
+      },
+      "unclassified": 1777
+    },
+    {
+      "record": "114",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1850,
+      "predicted_beats": 1799,
+      "qrs_tp": 1763,
+      "sha256_dat": "2ae83463edcfec256b79ce93716dcb40f289bacbe9e5e7a66cd00d0a31099d4b",
+      "V": {
+        "tp": 0,
+        "fn": 43,
+        "fp": 2,
+        "reference": 43
+      },
+      "S": {
+        "tp": 0,
+        "fn": 12,
+        "fp": 2,
+        "reference": 12
+      },
+      "unclassified": 64
+    },
+    {
+      "record": "115",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1919,
+      "predicted_beats": 1914,
+      "qrs_tp": 1914,
+      "sha256_dat": "34185efe9889608c76ebfbf5a467d3457970c6d11b77a2bf81b94bcf46e07c41",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "116",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2370,
+      "predicted_beats": 1786,
+      "qrs_tp": 1784,
+      "sha256_dat": "0ab38cfca76d816673213dcd570504bb3ab02ef76d51540fd7a6075bc580ad85",
+      "V": {
+        "tp": 0,
+        "fn": 109,
+        "fp": 0,
+        "reference": 109
+      },
+      "S": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 0,
+        "reference": 1
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "117",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1508,
+      "predicted_beats": 3092,
+      "qrs_tp": 85,
+      "sha256_dat": "2ce7de6f20baf4cfef0369f9a13fa53784d18e2da78c11afa1e4c55e8ad1900e",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 0,
+        "reference": 1
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "118",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2239,
+      "predicted_beats": 2544,
+      "qrs_tp": 2123,
+      "sha256_dat": "66ea4b70b7d64abd0f49089ae1b8f0f577664c46e5b29ac23b291934e063df15",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 95,
+        "fp": 0,
+        "reference": 95
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "119",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1953,
+      "predicted_beats": 1880,
+      "qrs_tp": 1609,
+      "sha256_dat": "02a286a28e69b441568add915f16a2856b22bab893bf8729ee9654411ed3a5aa",
+      "V": {
+        "tp": 0,
+        "fn": 436,
+        "fp": 0,
+        "reference": 436
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "121",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1830,
+      "predicted_beats": 2134,
+      "qrs_tp": 1719,
+      "sha256_dat": "679f374a7b2557fed04a4bc5648301ce9bdd38e5a4f13b2e63ebbcf7cb3fb482",
+      "V": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 1,
+        "reference": 1
+      },
+      "S": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 1,
+        "reference": 1
+      },
+      "unclassified": 512
+    },
+    {
+      "record": "122",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2428,
+      "predicted_beats": 2428,
+      "qrs_tp": 2427,
+      "sha256_dat": "a700c794bfe23565603d75dc5706915f5436e522802d260e758683d11f5b9e13",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "123",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1492,
+      "predicted_beats": 1508,
+      "qrs_tp": 1480,
+      "sha256_dat": "8a685a846b82d72aac4dd86171ad0fe5b19c0bd9ce51ddc1e6f015f73b2d8c3a",
+      "V": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 0,
+        "reference": 3
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 1,
+        "reference": 0
+      },
+      "unclassified": 32
+    },
+    {
+      "record": "124",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1592,
+      "predicted_beats": 2840,
+      "qrs_tp": 1547,
+      "sha256_dat": "296988e49d2653eb499ad0b17c46826b4296b7eaf94df3f76f1ba2dcdf6bc48b",
+      "V": {
+        "tp": 0,
+        "fn": 47,
+        "fp": 6,
+        "reference": 47
+      },
+      "S": {
+        "tp": 0,
+        "fn": 31,
+        "fp": 6,
+        "reference": 31
+      },
+      "unclassified": 1294
+    },
+    {
+      "record": "200",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2554,
+      "predicted_beats": 2800,
+      "qrs_tp": 2485,
+      "sha256_dat": "a9e203b3807b9fcd3647cde03444437cb8eec7f5128a8eb413edafb394272e0f",
+      "V": {
+        "tp": 3,
+        "fn": 807,
+        "fp": 11,
+        "reference": 810
+      },
+      "S": {
+        "tp": 0,
+        "fn": 30,
+        "fp": 1,
+        "reference": 30
+      },
+      "unclassified": 846
+    },
+    {
+      "record": "201",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1918,
+      "predicted_beats": 2117,
+      "qrs_tp": 1915,
+      "sha256_dat": "16610ae46eff900794597503d15af4572a8b1518f18dbed2843b7e68c81f3898",
+      "V": {
+        "tp": 0,
+        "fn": 198,
+        "fp": 10,
+        "reference": 198
+      },
+      "S": {
+        "tp": 0,
+        "fn": 128,
+        "fp": 0,
+        "reference": 128
+      },
+      "unclassified": 350
+    },
+    {
+      "record": "202",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2107,
+      "predicted_beats": 2120,
+      "qrs_tp": 2101,
+      "sha256_dat": "0c990e4142de6be898de4b21bd6e6705cd567e5d97cb731a994dc5aee9c7142d",
+      "V": {
+        "tp": 0,
+        "fn": 18,
+        "fp": 14,
+        "reference": 18
+      },
+      "S": {
+        "tp": 0,
+        "fn": 55,
+        "fp": 0,
+        "reference": 55
+      },
+      "unclassified": 362
+    },
+    {
+      "record": "203",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2927,
+      "predicted_beats": 2498,
+      "qrs_tp": 2440,
+      "sha256_dat": "5ba7d2237fc838438efd8bb0a3baeffc5de2e70c76e3ab7e401e811ad82f43e0",
+      "V": {
+        "tp": 0,
+        "fn": 440,
+        "fp": 0,
+        "reference": 440
+      },
+      "S": {
+        "tp": 0,
+        "fn": 2,
+        "fp": 0,
+        "reference": 2
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "205",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2609,
+      "predicted_beats": 2640,
+      "qrs_tp": 2605,
+      "sha256_dat": "8a513c39e6d9a1d732de0b3909a87aa1fcfd4bd55ab5f59a5b810967d252af36",
+      "V": {
+        "tp": 0,
+        "fn": 71,
+        "fp": 0,
+        "reference": 71
+      },
+      "S": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 0,
+        "reference": 3
+      },
+      "unclassified": 112
+    },
+    {
+      "record": "207",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1828,
+      "predicted_beats": 3009,
+      "qrs_tp": 1784,
+      "sha256_dat": "139f99250366fbf347cba4d8ea1fbe788f98cb1b93b70f50ccba70122d908605",
+      "V": {
+        "tp": 3,
+        "fn": 193,
+        "fp": 0,
+        "reference": 196
+      },
+      "S": {
+        "tp": 0,
+        "fn": 104,
+        "fp": 7,
+        "reference": 104
+      },
+      "unclassified": 336
+    },
+    {
+      "record": "208",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2900,
+      "predicted_beats": 2866,
+      "qrs_tp": 2852,
+      "sha256_dat": "22873623623c44ee413a5b60cacb15d4af2723734836fb3ae45d9ff96bdb36e7",
+      "V": {
+        "tp": 0,
+        "fn": 971,
+        "fp": 0,
+        "reference": 971
+      },
+      "S": {
+        "tp": 0,
+        "fn": 2,
+        "fp": 0,
+        "reference": 2
+      },
+      "unclassified": 861
+    },
+    {
+      "record": "209",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2956,
+      "predicted_beats": 2926,
+      "qrs_tp": 2920,
+      "sha256_dat": "e2516dd126ea85529d9a0e8442fef5d880a492d41f0692a76e648c8437f15c5f",
+      "V": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 0,
+        "reference": 1
+      },
+      "S": {
+        "tp": 0,
+        "fn": 383,
+        "fp": 2,
+        "reference": 383
+      },
+      "unclassified": 445
+    },
+    {
+      "record": "210",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2601,
+      "predicted_beats": 2553,
+      "qrs_tp": 2544,
+      "sha256_dat": "76e971fba03c0ae2ab261c7446240987ecde82f45dad1d4f36e290b950eb464b",
+      "V": {
+        "tp": 6,
+        "fn": 185,
+        "fp": 0,
+        "reference": 191
+      },
+      "S": {
+        "tp": 0,
+        "fn": 22,
+        "fp": 4,
+        "reference": 22
+      },
+      "unclassified": 199
+    },
+    {
+      "record": "212",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2700,
+      "predicted_beats": 2697,
+      "qrs_tp": 2693,
+      "sha256_dat": "6b63d3e20c40073be852e8121196d5de2ede502168fcb6c10ca5af841418cc5c",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "213",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 3192,
+      "predicted_beats": 2118,
+      "qrs_tp": 2076,
+      "sha256_dat": "0cb13cd9299b0ab68f8f3064b2ab72f853d155abb277b68daef0a26cbc173b0d",
+      "V": {
+        "tp": 0,
+        "fn": 220,
+        "fp": 0,
+        "reference": 220
+      },
+      "S": {
+        "tp": 0,
+        "fn": 28,
+        "fp": 0,
+        "reference": 28
+      },
+      "unclassified": 743
+    },
+    {
+      "record": "214",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2221,
+      "predicted_beats": 2278,
+      "qrs_tp": 2170,
+      "sha256_dat": "a886b1ceb56e950858dedf5b56d3fdb5f26aef3667f8effcb880c1c000ee0cd3",
+      "V": {
+        "tp": 0,
+        "fn": 254,
+        "fp": 0,
+        "reference": 254
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "215",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 3303,
+      "predicted_beats": 3288,
+      "qrs_tp": 3287,
+      "sha256_dat": "9e28799b5733a2d60470653e6f6ca26610143303233a1b7559cff54e2ad26ef9",
+      "V": {
+        "tp": 11,
+        "fn": 148,
+        "fp": 0,
+        "reference": 159
+      },
+      "S": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 9,
+        "reference": 3
+      },
+      "unclassified": 1820
+    },
+    {
+      "record": "219",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2116,
+      "predicted_beats": 2156,
+      "qrs_tp": 2114,
+      "sha256_dat": "7fc27b77e313aaa40da9f39783f8fb29a6a910be148e67463e5093793644751a",
+      "V": {
+        "tp": 0,
+        "fn": 64,
+        "fp": 0,
+        "reference": 64
+      },
+      "S": {
+        "tp": 0,
+        "fn": 7,
+        "fp": 0,
+        "reference": 7
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "220",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2010,
+      "predicted_beats": 2007,
+      "qrs_tp": 2007,
+      "sha256_dat": "c01ca1a76fb3a89e96134a08f2e5aa6e760eda59ea9086ba8aaa13ba0cca9cff",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 94,
+        "fp": 0,
+        "reference": 94
+      },
+      "unclassified": 48
+    },
+    {
+      "record": "221",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2387,
+      "predicted_beats": 2393,
+      "qrs_tp": 2379,
+      "sha256_dat": "274d17c6a35f7adcbb10a59ea34350e5ad299c2d69e4fa579d8863213e1fe9ae",
+      "V": {
+        "tp": 0,
+        "fn": 390,
+        "fp": 0,
+        "reference": 390
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "222",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2442,
+      "predicted_beats": 2581,
+      "qrs_tp": 2386,
+      "sha256_dat": "0510bf39ed2925a83debd249492bdfe77c575148376aaabeba4c7b7a2451ac5d",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 6,
+        "reference": 0
+      },
+      "S": {
+        "tp": 0,
+        "fn": 209,
+        "fp": 6,
+        "reference": 209
+      },
+      "unclassified": 1249
+    },
+    {
+      "record": "223",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2562,
+      "predicted_beats": 2629,
+      "qrs_tp": 2544,
+      "sha256_dat": "1d42aa9e13f7349287ae5f0f00b40078c01aadd39e2cad1001ab42d3b7484594",
+      "V": {
+        "tp": 0,
+        "fn": 472,
+        "fp": 4,
+        "reference": 472
+      },
+      "S": {
+        "tp": 0,
+        "fn": 73,
+        "fp": 8,
+        "reference": 73
+      },
+      "unclassified": 455
+    },
+    {
+      "record": "228",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2014,
+      "predicted_beats": 3024,
+      "qrs_tp": 1911,
+      "sha256_dat": "b2421f15447772bb7a38f5073e4e07d5d9be50d875441a4a0821c9e22b78fdac",
+      "V": {
+        "tp": 5,
+        "fn": 348,
+        "fp": 0,
+        "reference": 353
+      },
+      "S": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 4,
+        "reference": 3
+      },
+      "unclassified": 1880
+    },
+    {
+      "record": "230",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2212,
+      "predicted_beats": 2196,
+      "qrs_tp": 2188,
+      "sha256_dat": "fba09ea54d9caa342c54c46e0df247335345b02444f7d15162906adfef55d057",
+      "V": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 0,
+        "reference": 1
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 93
+    },
+    {
+      "record": "231",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1538,
+      "predicted_beats": 1538,
+      "qrs_tp": 1538,
+      "sha256_dat": "7d4f56d6c4b1d50322154381c1d8761457c2f2696973e915a3c19d8a5b789595",
+      "V": {
+        "tp": 0,
+        "fn": 2,
+        "fp": 0,
+        "reference": 2
+      },
+      "S": {
+        "tp": 0,
+        "fn": 1,
+        "fp": 0,
+        "reference": 1
+      },
+      "unclassified": 34
+    },
+    {
+      "record": "232",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1751,
+      "predicted_beats": 1896,
+      "qrs_tp": 1747,
+      "sha256_dat": "3d74a21f848766c9607bc5eead7e4b2655f09586adb5561f02fd8fcb0e9da6d0",
+      "V": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "S": {
+        "tp": 37,
+        "fn": 1326,
+        "fp": 0,
+        "reference": 1363
+      },
+      "unclassified": 250
+    },
+    {
+      "record": "233",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 3025,
+      "predicted_beats": 3143,
+      "qrs_tp": 2830,
+      "sha256_dat": "6ccd6b1fa0cafc052369e7ec0a99cc6c3b56b3c12afff26db800c55a826211b4",
+      "V": {
+        "tp": 0,
+        "fn": 817,
+        "fp": 0,
+        "reference": 817
+      },
+      "S": {
+        "tp": 0,
+        "fn": 5,
+        "fp": 0,
+        "reference": 5
+      },
+      "unclassified": 0
+    },
+    {
+      "record": "234",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2704,
+      "predicted_beats": 2708,
+      "qrs_tp": 2695,
+      "sha256_dat": "89f826307bfc91a554021da87c17b88b843ed3d26aa9ea237fc6f7c8af00da6d",
+      "V": {
+        "tp": 0,
+        "fn": 3,
+        "fp": 0,
+        "reference": 3
+      },
+      "S": {
+        "tp": 0,
+        "fn": 50,
+        "fp": 0,
+        "reference": 50
+      },
+      "unclassified": 0
+    }
+  ]
+}

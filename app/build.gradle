@@ -1,5 +1,27 @@
 apply plugin: 'com.android.application'
 
+// Reproducible JVM regressions against the actual Android engine classes.
+tasks.register('compileSelfTests', JavaCompile) {
+    dependsOn 'compileDebugJavaWithJavac'
+    source = fileTree(rootProject.file('tools')) { include '**/*.java' }
+    classpath = files(android.bootClasspath) + files(layout.buildDirectory.dir('intermediates/javac/debug/compileDebugJavaWithJavac/classes'))
+    destinationDirectory = layout.buildDirectory.dir('self-tests')
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+    options.encoding = 'UTF-8'
+}
+def suites = ['EcgEngineSelfTest', 'MorphologyModelSelfTest', 'PolarAccDecoderSelfTest', 'AdaptiveTwinSelfTest', 'EcgScenarioSuite', 'PmdClockSelfTest', 'ReliabilitySelfTest', 'ExperimentalSelfTest']
+suites.each { suite ->
+    tasks.register("run${suite}", JavaExec) {
+        dependsOn 'compileSelfTests'
+        classpath = files(layout.buildDirectory.dir('self-tests')) + files(layout.buildDirectory.dir('intermediates/javac/debug/compileDebugJavaWithJavac/classes')) + files(android.bootClasspath)
+        mainClass = "com.local.polarh10monitor.${suite}"
+        systemProperty 'file.encoding', 'UTF-8'
+    }
+}
+tasks.register('selfTest') { dependsOn suites.collect { "run${it}" } }
+
+
 def signingFile = rootProject.file('keystore.properties')
 def signingValues = new Properties()
 if (signingFile.exists()) {
@@ -11,11 +33,12 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.local.polarh10monitor'
+        applicationId 'com.local.polarh10monitor.lab'
         minSdk 26
         targetSdk 35
-        versionCode 14
-        versionName '3.1.0-test'
+        testInstrumentationRunner 'com.local.polarh10monitor.StorageInstrumentation'
+        versionCode 17
+        versionName '4.0.0-beta3-lab'
     }
 
     signingConfigs {
@@ -32,7 +55,8 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingFile.exists() ? signingConfigs.publication : signingConfigs.debug
+            // An unsigned release must never silently use the beta/debug key.
+            if (signingFile.exists()) signingConfig signingConfigs.publication
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

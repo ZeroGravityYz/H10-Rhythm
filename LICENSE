@@ -1,5 +1,8 @@
 MIT License
 
+Scope: application source code, excluding experimental trained weights in
+ExperimentalWeights.java. See MODEL_NOTICE.md for data/model restrictions.
+
 Copyright (c) 2026 Mattéo Leroy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

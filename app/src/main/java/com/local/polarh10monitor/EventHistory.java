@@ -27,32 +27,23 @@ public final class EventHistory {
     private EventHistory() {}
 
     public static synchronized void add(Context context,String id,EcgEngine.DetectionEvent event) {
-        ArrayList<Record> records=new ArrayList<>(list(context));
-        for(Record record:records)if(record.id.equals(id))return;
-        records.add(0,new Record(id,event.type,event.title,event.detail,event.timestampMs,event.severity,false,"",event.morphology,
-                event.morphologyScore,event.morphologyThreshold,event.personalModelReady,event.bpm,event.rmssdMs,event.sdnnMs,event.signalQualityPercent));
-        save(context,records);
+        LocalRepository db=LocalRepository.get(context);if(db.find("event",id)!=null)return;
+        Record record=new Record(id,event.type,event.title,event.detail,event.timestampMs,event.severity,false,"",event.morphology,
+                event.morphologyScore,event.morphologyThreshold,event.personalModelReady,event.bpm,event.rmssdMs,event.sdnnMs,event.signalQualityPercent);
+        db.put("event",id,event.timestampMs,record.toJson());
     }
-
-    public static synchronized void markReady(Context context,String id) {
-        ArrayList<Record> records=new ArrayList<>(list(context));
-        for(Record record:records)if(record.id.equals(id))record.ready=true;
-        save(context,records);
-    }
-
+    public static synchronized void markReady(Context context,String id){state(context,id,"ready","");}
+    public static synchronized void state(Context context,String id,String state,String error){LocalRepository db=LocalRepository.get(context);JSONObject o=db.find("event",id);if(o==null)return;try{o.put("ready",state.equals("ready"));o.put("reportState",state);o.put("reportError",error);db.put("event",id,o.optLong("time"),o);}catch(org.json.JSONException e){throw new IllegalStateException(e);}}
     public static synchronized void review(Context context,String id,String review) {
-        ArrayList<Record> records=new ArrayList<>(list(context));
-        for(Record record:records)if(record.id.equals(id))record.review=review;
-        save(context,records);
+        if(!java.util.Arrays.asList("normal","anomaly","artifact","").contains(review))throw new IllegalArgumentException("annotation");
+        LocalRepository db=LocalRepository.get(context);JSONObject o=db.find("event",id);if(o==null)return;try{o.put("review",review);db.put("event",id,o.optLong("time"),o);db.put("annotation",id,o.optLong("time"),o);}catch(org.json.JSONException e){throw new IllegalStateException(e);}
     }
 
     public static synchronized List<Record> list(Context context) {
         ArrayList<Record> records=new ArrayList<>();
         try {
-            String encoded=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(KEY,"[]");
-            JSONArray array=new JSONArray(encoded);
-            for(int i=0;i<array.length();i++)records.add(Record.fromJson(array.getJSONObject(i)));
-        } catch(Exception ignored) {}
+            for(JSONObject o:LocalRepository.get(context).list("event"))records.add(Record.fromJson(o));
+        } catch(Exception error) {throw new IllegalStateException("Historique illisible ; données conservées",error);}
         records.sort(Comparator.comparingLong((Record r)->r.timestampMs).reversed());
         return Collections.unmodifiableList(records);
     }
@@ -65,34 +56,35 @@ public final class EventHistory {
     /** Supprime en une fois les dossiers de rapports créés par l'application et leur index local. */
     public static synchronized int deleteAllReports(Context context){
         int deleted=0;
-        if(Build.VERSION.SDK_INT>=29){Uri collection=MediaStore.Files.getContentUri("external");String selection=MediaStore.MediaColumns.RELATIVE_PATH+" LIKE ?";String[] args={Environment.DIRECTORY_DOCUMENTS+"/PolarH10Monitor/%"};ArrayList<Uri> targets=new ArrayList<>();try(Cursor cursor=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},selection,args,null)){if(cursor!=null)while(cursor.moveToNext())targets.add(ContentUris.withAppendedId(collection,cursor.getLong(0)));}catch(Exception ignored){}for(Uri uri:targets)try{deleted+=Math.max(0,context.getContentResolver().delete(uri,null,null));}catch(Exception ignored){}}
+        if(Build.VERSION.SDK_INT>=29){Uri collection=MediaStore.Files.getContentUri("external");String selection=MediaStore.MediaColumns.RELATIVE_PATH+" LIKE ?";String[] args={Environment.DIRECTORY_DOCUMENTS+"/PolarH10Lab/%"};ArrayList<Uri> targets=new ArrayList<>();try(Cursor cursor=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},selection,args,null)){if(cursor!=null)while(cursor.moveToNext())targets.add(ContentUris.withAppendedId(collection,cursor.getLong(0)));}catch(Exception error){throw new IllegalStateException("Impossible de lister les rapports",error);}for(Uri uri:targets){int count=context.getContentResolver().delete(uri,null,null);if(count<1)throw new IllegalStateException("Un fichier n’a pas pu être supprimé");deleted+=count;}}
         else{File base=context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);if(base!=null)deleted=deleteTree(new File(base,"PolarH10Monitor"));}
-        context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(KEY).apply();return deleted;
+        LocalRepository.get(context).clear("event");context.getSharedPreferences(PREFS,0).edit().remove(KEY).apply();return deleted;
     }
 
-    private static int deleteTree(File file){if(file==null||!file.exists())return 0;int count=0;File[] children=file.listFiles();if(children!=null)for(File child:children)count+=deleteTree(child);if(file.delete())count++;return count;}
+    public static boolean deleteOne(Context context,String id){synchronized(EventStore.DATA_LOCK){synchronized(EventHistory.class){return deleteOneLocked(context,id);}}}
+    private static boolean deleteOneLocked(Context context,String id){
+        if(!id.matches("[A-Za-z0-9_-]+"))return false;
+        try{
+            if(Build.VERSION.SDK_INT>=29){Uri collection=MediaStore.Files.getContentUri("external");ArrayList<Uri> uris=new ArrayList<>();
+                try(Cursor c=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},MediaStore.MediaColumns.RELATIVE_PATH+"=?",new String[]{"Documents/PolarH10Lab/"+id+"/"},null)){if(c!=null)while(c.moveToNext())uris.add(ContentUris.withAppendedId(collection,c.getLong(0)));}
+                for(Uri uri:uris)if(context.getContentResolver().delete(uri,null,null)<1)return false;
+            }else{File parent=context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);if(parent==null)return false;File dir=new File(parent,"PolarH10Lab/"+id);deleteTree(dir);if(dir.exists())return false;}
+            LocalRepository.get(context).delete("event",id);return true;
+        }catch(Exception e){return false;}
+    }
+    private static int deleteTree(File file){if(file==null||!file.exists())return 0;int count=0;File[] children=file.listFiles();if(children!=null)for(File child:children)count+=deleteTree(child);if(file.delete())count++;else throw new IllegalStateException("Suppression impossible : "+file.getName());return count;}
 
     /** Retire uniquement les copies de partage IA créées par les anciennes versions. */
-    public static int deleteLegacyAiFiles(Context context){if(Build.VERSION.SDK_INT<29)return 0;Uri collection=MediaStore.Files.getContentUri("external");String selection="("+MediaStore.MediaColumns.DISPLAY_NAME+"=? OR "+MediaStore.MediaColumns.DISPLAY_NAME+"=?) AND "+MediaStore.MediaColumns.RELATIVE_PATH+" LIKE ?";String[] args={"prompt_ia.txt","analyse_ecg.txt",Environment.DIRECTORY_DOCUMENTS+"/PolarH10Monitor/%"};ArrayList<Uri> targets=new ArrayList<>();try(Cursor cursor=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},selection,args,null)){if(cursor!=null)while(cursor.moveToNext())targets.add(ContentUris.withAppendedId(collection,cursor.getLong(0)));}catch(Exception ignored){}int deleted=0;for(Uri uri:targets)try{deleted+=Math.max(0,context.getContentResolver().delete(uri,null,null));}catch(Exception ignored){}return deleted;}
+    public static int deleteLegacyAiFiles(Context context){if(Build.VERSION.SDK_INT<29)return 0;Uri collection=MediaStore.Files.getContentUri("external");String selection="("+MediaStore.MediaColumns.DISPLAY_NAME+"=? OR "+MediaStore.MediaColumns.DISPLAY_NAME+"=?) AND "+MediaStore.MediaColumns.RELATIVE_PATH+" LIKE ?";String[] args={"prompt_ia.txt","analyse_ecg.txt",Environment.DIRECTORY_DOCUMENTS+"/PolarH10Lab/%"};ArrayList<Uri> targets=new ArrayList<>();try(Cursor cursor=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},selection,args,null)){if(cursor!=null)while(cursor.moveToNext())targets.add(ContentUris.withAppendedId(collection,cursor.getLong(0)));}catch(Exception ignored){}int deleted=0;for(Uri uri:targets)try{deleted+=Math.max(0,context.getContentResolver().delete(uri,null,null));}catch(Exception ignored){}return deleted;}
 
-    public static Aggregate aggregate(Context context,int days){long cutoff=days<=0?0:System.currentTimeMillis()-days*86_400_000L;Aggregate a=new Aggregate();for(Record r:list(context)){if(r.timestampMs<cutoff)continue;a.total++;if("ESV".equals(r.type)||"WIDE_PREMATURE".equals(r.type)||"PREMATURE".equals(r.type))a.premature++;else if("ESA".equals(r.type))a.esa++;else if("PAUSE".equals(r.type))a.pauses++;else if("IRREGULAR".equals(r.type))a.irregular++;else if("TACHY".equals(r.type)||"REGULAR_TACHY".equals(r.type))a.fast++;else if("BRADY".equals(r.type))a.slow++;if("artifact".equals(r.review))a.artifacts++;if("anomaly".equals(r.review))a.confirmed++;}return a;}
+    public static Aggregate aggregate(Context context,int days){long cutoff=days<=0?0:System.currentTimeMillis()-days*86_400_000L;Aggregate a=new Aggregate();for(Record r:list(context)){if(r.timestampMs<cutoff)continue;a.total++;if("artifact".equals(r.review)){a.artifacts++;continue;}if("normal".equals(r.review))continue;if("ESV".equals(r.type)||"WIDE_PREMATURE".equals(r.type)||"PREMATURE".equals(r.type))a.premature++;else if("ESA".equals(r.type))a.esa++;else if("PAUSE".equals(r.type))a.pauses++;else if("IRREGULAR".equals(r.type))a.irregular++;else if("TACHY".equals(r.type)||"REGULAR_TACHY".equals(r.type))a.fast++;else if("BRADY".equals(r.type))a.slow++;if("artifact".equals(r.review))a.artifacts++;if("anomaly".equals(r.review))a.confirmed++;}return a;}
 
     public static final class Aggregate{public int total,premature,esa,pauses,irregular,fast,slow,artifacts,confirmed;}
 
-    public static Uri findPdf(Context context,String eventId) {
-        Uri collection=MediaStore.Files.getContentUri("external");
-        String relative="Documents/PolarH10Monitor/"+eventId+"/";
-        String selection=MediaStore.MediaColumns.DISPLAY_NAME+"=? AND "+MediaStore.MediaColumns.RELATIVE_PATH+"=?";
-        try(Cursor cursor=context.getContentResolver().query(collection,new String[]{MediaStore.MediaColumns._ID},selection,new String[]{"rapport.pdf",relative},null)){
-            if(cursor!=null&&cursor.moveToFirst())return ContentUris.withAppendedId(collection,cursor.getLong(0));
-        }catch(Exception ignored){}
-        return null;
-    }
+    public static Uri findPdf(Context context,String eventId){return ReportFiles.find(context,eventId,"rapport.pdf");}
 
     private static void save(Context context,List<Record> source) {
-        JSONArray array=new JSONArray();int count=0;
-        for(Record record:source){if(count++>=LIMIT)break;array.put(record.toJson());}
-        SharedPreferences.Editor editor=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit();editor.putString(KEY,array.toString()).apply();
+        ArrayList<JSONObject> values=new ArrayList<>();for(Record r:source)values.add(r.toJson());LocalRepository.get(context).replace("event",values,"id","time");
     }
 
     public static final class Record {

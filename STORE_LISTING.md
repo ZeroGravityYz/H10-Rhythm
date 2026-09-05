@@ -1,52 +1,13 @@
-# Fiche de distribution — H10 Rhythm
+# Fiche de distribution — brouillon non prêt pour publication médicale
 
-## Nom
+La branche actuelle produit **H10 Rhythm Lab**, version de recherche distincte sans alertes cardiaques physiques. Ce n'est pas une mise à jour de surveillance à publier. Le modèle Icentia comporte des restrictions non commerciales : voir MODEL_NOTICE.md. Les résultats défavorables et les limites figurent dans docs/EXPERIMENTAL_BETA2.md.
 
-H10 Rhythm
+H10 Rhythm est un prototype Android indépendant pour consulter le signal ECG d’une Polar H10 et organiser ses mesures personnelles.
 
-## Description courte
+Fonctions : tracé, enregistrement, recherche dans l’historique, rapports et données brutes, journal de séances, bilans au calme et tendances personnelles.
 
-Suivez votre ECG et apprenez votre réponse personnelle à l’entraînement avec votre Polar H10.
+Version 4.0 bêta 1 : la détection automatique n’a pas atteint une fiabilité suffisante sur l’évaluation publique annotée. Ne pas présenter cette application comme un dispositif médical, une surveillance d’urgence, un détecteur exhaustif d’extrasystoles, un prédicteur d’infection ou une solution supérieure aux dispositifs cliniquement validés.
 
-## Description complète
+Les essais Android sur appareil, la validation H10 contre référence et la revue des exigences applicables à la distribution restent nécessaires. Voir docs/VALIDATION_V4.md.
 
-H10 Rhythm se connecte directement à une ceinture Polar H10 pour afficher son signal ECG en temps réel et poursuivre la surveillance lorsque l’écran est éteint.
-
-L’application apprend progressivement la forme habituelle de vos battements. Lorsqu’un passage mérite une vérification, elle conserve le contexte avant et après l’événement, puis prépare un rapport PDF accompagné des données brutes.
-
-Adaptive Twin construit une référence personnelle à partir de bilans matinaux standardisés, apprend la relation entre charge d’entraînement et réponse du lendemain, puis affiche une fourchette prudente et ses facteurs. Une prévision ML reste masquée tant qu’elle n’a pas mieux fonctionné qu’une comparaison simple sur l’historique personnel. Ces informations décrivent des tendances non spécifiques et ne prédisent aucune maladie.
-
-Fonctions principales :
-
-- tracé ECG fluide à 130 Hz ;
-- filtrage des manipulations grâce au capteur de mouvement du Polar H10 ;
-- connexion Bluetooth directe et reconnexion automatique ;
-- analyse locale sans compte ni serveur ;
-- historique clair des passages enregistrés ;
-- bilan matinal guidé et référence personnelle calculée localement ;
-- tendances FC de repos et VFC, état de récupération expliqué et niveau de confiance ;
-- estimation du temps cardiaque en zones modérée et soutenue ;
-- rapports PDF et export des données brutes ;
-- modèle morphologique personnel conservé sur le téléphone et corrections utilisateur réversibles ;
-- surveillance possible lorsque l’écran est éteint.
-
-H10 Rhythm est un projet expérimental mono-dérivation. Il ne fournit pas de diagnostic, ne remplace pas un ECG médical et ne peut pas exclure un trouble du rythme. En présence de symptômes inquiétants, contactez un professionnel de santé ou les services d’urgence.
-
-Polar et Polar H10 sont des marques de Polar Electro Oy. H10 Rhythm est un projet indépendant, non affilié à Polar Electro.
-
-## Catégorie proposée
-
-Santé et remise en forme
-
-## Coordonnées du développeur
-
-Mattéo Leroy
-
-## Éléments encore requis avant une publication officielle
-
-- clé de signature privée de production ;
-- identifiant d’application définitif ;
-- politique de confidentialité publiée sur une URL publique ;
-- captures d’écran prises sur plusieurs tailles de téléphone ;
-- tests fermés sur plusieurs versions Android ;
-- validation juridique des formulations liées à la santé.
+Développé par Mattéo Leroy. Polar et Polar H10 sont des marques de Polar Electro Oy. Projet non affilié à Polar.

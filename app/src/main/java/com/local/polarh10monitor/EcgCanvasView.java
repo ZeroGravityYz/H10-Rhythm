@@ -22,6 +22,7 @@ public final class EcgCanvasView extends View {
     public EcgCanvasView(Context c,AttributeSet a){super(c,a);init();}
     private void init(){setBackgroundColor(0xfffffafa);}
 
+    public void clear(){pending.clear();displayPos=displayCount=0;receivedTotal=-1;sampleBudget=0;invalidate();}
     public void setSamples(float[] source,long totalSamples){
         if(source==null)return;
         long delta=receivedTotal<0?source.length:totalSamples-receivedTotal;
@@ -38,8 +39,9 @@ public final class EcgCanvasView extends View {
 
     private void appendDisplayed(float value){displayed[displayPos]=value;displayPos=(displayPos+1)%displayed.length;if(displayCount<displayed.length)displayCount++;}
     private void startAnimation(){animating=true;lastFrameNs=System.nanoTime();postOnAnimation(frame);}
-    private final Runnable frame=new Runnable(){@Override public void run(){if(!animating)return;long now=System.nanoTime();double dt=Math.min(.050,Math.max(0,(now-lastFrameNs)/1_000_000_000.0));lastFrameNs=now;double rate=EcgEngine.FS*(pending.size()>EcgEngine.FS?1.06:1.0);sampleBudget+=dt*rate;int take=Math.min((int)sampleBudget,pending.size());for(int i=0;i<take;i++){Float v=pending.pollFirst();if(v!=null)appendDisplayed(v);}sampleBudget-=take;postInvalidateOnAnimation();postOnAnimation(this);}};
+    private final Runnable frame=new Runnable(){@Override public void run(){if(!animating)return;long now=System.nanoTime();double dt=Math.min(.050,Math.max(0,(now-lastFrameNs)/1_000_000_000.0));lastFrameNs=now;double rate=EcgEngine.FS*(pending.size()>EcgEngine.FS?1.06:1.0);sampleBudget=Math.min(EcgEngine.FS*.10,sampleBudget+dt*rate);int take=Math.min((int)sampleBudget,pending.size());for(int i=0;i<take;i++){Float v=pending.pollFirst();if(v!=null)appendDisplayed(v);}sampleBudget-=take;if(pending.isEmpty())sampleBudget=0;postInvalidateOnAnimation();postOnAnimation(this);}};
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();if(!animating)startAnimation();}
+    @Override protected void onWindowVisibilityChanged(int visibility){super.onWindowVisibilityChanged(visibility);if(visibility!=VISIBLE){animating=false;removeCallbacks(frame);}else if(isAttachedToWindow()&&!animating)startAnimation();}
     @Override protected void onDetachedFromWindow(){animating=false;removeCallbacks(frame);super.onDetachedFromWindow();}
 
     @Override protected void onDraw(Canvas c){

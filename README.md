@@ -1,83 +1,78 @@
-# H10 Rhythm
+# H10 Rhythm Lab — 4.0 bêta 3 expérimentale
 
-Application Android native de suivi ECG en temps réel pour la ceinture Polar H10. Elle affiche le signal à 130 Hz, poursuit l’enregistrement écran éteint, repère des passages inhabituels et conserve leur contexte dans un rapport PDF accompagné des données brutes.
+**Cette branche compile une application laboratoire séparée (`com.local.polarh10monitor.lab`), sans alertes cardiaques physiques.** Elle ne remplace pas H10 Rhythm. Modèles entraînés et testés sur ECG publics, résultats encore insuffisants. Voir le [bilan expérimental complet](docs/EXPERIMENTAL_BETA2.md) et la [notice non commerciale du modèle Icentia](MODEL_NOTICE.md). Les données et rapports Lab sont isolés dans `PolarH10Lab`.
 
-Développé par **Mattéo Leroy**.
+Le laboratoire ajoute un détecteur causal, un modèle supervisé compact, une référence personnelle et un affichage des indéterminés. La bêta 3 améliore la présentation et la distribution sans modifier les poids ni les décisions du moteur évalué en bêta 2.
 
-## Fonctionnalités
+[Télécharger l’APK expérimental](https://github.com/ZeroGravityYz/H10-Rhythm/releases/download/v4.0.0-beta3-lab/H10_Rhythm_Lab_v4.0.0_beta3.apk) · [Notes de version](CHANGELOG.md) · [Résultats et limites](docs/EXPERIMENTAL_BETA2.md)
 
-- connexion directe au service BLE PMD du Polar H10 ;
-- fusion de l’ECG à 130 Hz et de l’accéléromètre H10 à 50 Hz pour repérer les manipulations de ceinture ;
-- tracé ECG fluide calibré à 25 mm/s et 10 mm/mV ;
-- surveillance en service de premier plan avec reconnexion automatique ;
-- détection de battements prématurés, pauses et rythmes durablement rapides, lents ou irréguliers ;
-- historique local des passages détectés ;
-- menu Adaptive Twin avec bilan matinal guidé, référence personnelle FC/VFC et recommandation de charge explicable ;
-- modèle dose-réponse local apprenant le lien entre état du matin, charge observée, effort perçu et réponse du lendemain ;
-- passeport de fiabilité comparant l’erreur du modèle à la prévision naïve avant d’autoriser les prévisions ML ;
-- expériences personnelles facultatives et associations affichées avec leurs nombres de journées comparables ;
-- contexte local sommeil, stress, fatigue, symptômes, alcool et entraînement récent ;
-- courbes de tendance sur 30 bilans et niveau de confiance dépendant de la quantité de données comparables ;
-- navigation supérieure compatible avec les boutons et gestes système Android ;
-- barrière anti-contact, qualité locale et décision retardée de 1,2 seconde avant toute alerte ;
-- profil morphologique personnel avec prototypes séparés pour les anomalies et les artefacts confirmés ;
-- rapports PDF silencieux et export JSONL comprenant 60 secondes avant et 30 secondes après un événement ;
-- tableau de bord sur 7 jours, 30 jours ou toute la période, recherche, filtres et VFC (RMSSD/SDNN) ;
-- indicateurs de session directement sur l’accueil et suppression globale des rapports ;
-- remise à zéro complète des rapports, valeurs brutes, signaux continus et statistiques d’historique ;
-- banc de test synthétique continu couvrant quatorze rythmes, anomalies et artefacts avant chaque publication ;
-- modèle morphologique personnel et apprentissage à partir des corrections de l’utilisateur ;
-- fonctionnement sans compte, publicité, serveur ou dépendance externe.
+Application Android native pour afficher et enregistrer l’ECG d’une Polar H10, retrouver les passages enregistrés et suivre ses mesures au repos. Développée par Mattéo Leroy.
 
-## Analyse personnalisée
+**Version expérimentale, pas un dispositif de surveillance médicale fiable.** Les tests logiciels passent, mais les évaluations publiques MIT-BIH, Icentia et sous bruit montrent de nombreuses anomalies manquées. Une absence de passage enregistré n’exclut rien. Les résultats ne démontrent pas les performances sur une Polar H10 portée au quotidien.
 
-Le moteur combine deux approches indépendantes :
+## Ce qui change
 
-1. des règles temporelles analysent les intervalles RR, les pauses et la qualité du signal ;
-2. un modèle métrique personnel analyse uniquement la forme du complexe ECG.
+- Quatre espaces : Aujourd’hui, ECG, Forme et Historique ; réglages accessibles séparément. Navigation adaptée à la largeur, marges système et formulaire de profil en trois étapes.
+- Accueil : connexion, batterie, battements, RMSSD, SDNN, qualité estimée et résumé des passages. Les termes avancés sont expliqués ou regroupés dans des sections dépliables.
+- ECG : tracé continu, marquage d’un ressenti ; relecture des captures brutes avec déplacement et vitesses 25/50/100 mm/s.
+- Historique commun aux passages, bilans et séances : recherche différée, périodes, date, favoris, sélection et suppression. Chargement des résultats en arrière-plan.
+- Forme : journal de séances avec durée réelle et effort perçu, journée explicitement complète ou inconnue, bilan au calme et tendances 7/30/90 jours. Aucun classement automatique « sportif/sédentaire ».
+- Rapports silencieux : capture visée de 60 s avant et 30 s après le passage, PDF multipage, JSONL non écrêté, état d’échec et tentative de reconstruction depuis le brut conservé.
+- Conservation du signal continu au choix : 24 h, 72 h ou 7 jours. Les événements restent jusqu’à leur suppression.
 
-Chaque battement propre est représenté par une fenêtre d’une seconde (130 points), normalisée puis projetée sur 16 composantes. Les 500 premiers battements jugés stables forment le prototype personnel. La distance au prototype fournit un score d’anomalie morphologique. Les confirmations données depuis l’historique servent d’exemples supplémentaires. Elles sont uniques et réversibles : changer l’étiquette d’un passage remplace son influence précédente au lieu de l’ajouter une seconde fois.
+L’écran ne peut pas garantir une échelle physique exacte sur tous les téléphones. Le PDF utilise 25 mm/s et 10 mm/mV lorsqu’il est imprimé à 100 %.
 
-Avant qu’un événement ne soit enregistré, le moteur attend 1,2 seconde puis combine le mouvement mesuré par la ceinture avec un contrôle local du tracé. Une secousse, un plateau, une saturation, un déplacement brutal de la ligne de base ou une énergie anormale hors du QRS mettent le passage en quarantaine. Si l’accéléromètre n’est pas disponible, l’ECG continue de fonctionner avec les contrôles de signal seuls.
+## Deux apprentissages différents
 
-Ce modèle est un détecteur statistique adaptatif compact, pas un réseau neuronal générique. Son état reste stocké sur le téléphone et peut être réinitialisé depuis les réglages.
+### Morphologie ECG
 
-## Adaptive Twin
+Le module personnel n'est pas un réseau neuronal : une fenêtre de 130 points est normalisée puis résumée en 16 composantes fixes. Les 500 battements sélectionnés automatiquement comme stables constituent une référence métrique personnelle, pas 500 battements validés médicalement. Dans Lab, il est complété par une forêt expérimentale figée entraînée sur 22 MIT-BIH et 40 Icentia, évaluée sur des personnes séparées ; ses limites interdisent son emploi comme système d'alertes physiques.
 
-Le bilan Adaptive Twin analyse une fenêtre dédiée de trois minutes au calme. Les trente premières secondes sont réservées à la stabilisation. Les intervalles associés à des battements non normaux, au mouvement ou à un signal insuffisant sont exclus ; un bilan contenant moins de 90 intervalles propres ou moins de 80 % de signal exploitable n’est pas enregistré.
+Les annotations utilisateur alimentent des banques distinctes d’exemples inhabituels et d’artefacts, limitées à 64 prototypes par banque. Une annotation est réversible et indépendante de la présence du rapport. Deux étiquettes contradictoires proches entraînent une sortie incertaine. L’utilisateur ne confirme jamais médicalement une ESV en cliquant sur un bouton.
 
-Après plusieurs bilans comparables, l’application construit une référence personnelle robuste puis apprend la relation entre l’état du matin, la charge enregistrée jusqu’au bilan suivant et la réponse physiologique observée. L’effort perçu renseigné après une séance ajuste la charge lorsque la fréquence cardiaque seule ne décrit pas correctement l’effort.
+Les règles de rythme et les contrôles de bruit restent séparés. Le modèle peut manquer un problème ou confondre un artefact avec un battement.
 
-Le petit modèle régularisé est réentraîné localement à partir de l’historique. Ses prévisions sont testées dans l’ordre chronologique : elles restent masquées tant qu’au moins 21 transitions propres ne sont pas disponibles et que leur erreur n’est pas inférieure à celle de la règle « demain ressemble à aujourd’hui ». Dans le cas contraire, une fourchette prudente issue des règles explicables est affichée. Le passeport du modèle indique toujours les données disponibles, les erreurs comparées et l’incertitude.
+### Suivi de forme
 
-Les associations liées au sommeil, au stress, à la fatigue, à l’alcool ou aux séances difficiles ne sont affichées qu’avec leurs effectifs. Une expérience personnelle facultative peut comparer des nuits où un objectif a été respecté ou non. Ces résultats décrivent des associations individuelles ; ils ne prouvent pas une causalité, ne prédisent pas une maladie et ne constituent pas un diagnostic.
+Les 30 premières secondes du bilan servent à la stabilisation ; les 150 suivantes sont analysées. Une interruption invalide le bilan. La VFC utilise des intervalles NN admissibles et des différences entre intervalles contigus, sans relier artificiellement deux séries séparées par un rejet.
 
-Les minutes en zones sont estimées seulement pendant le port de la H10, à partir de la réserve cardiaque et d’un signal propre. Elles ne mesurent donc pas la sédentarité sur toute la journée. Les repères affichés suivent les recommandations générales de l’OMS pour les adultes : 150 à 300 minutes d’activité modérée, ou 75 à 150 minutes soutenues, avec du renforcement au moins deux jours par semaine.
+Le modèle de réponse utilise des transitions entre matins comparables. Une journée non renseignée n’est pas assimilée à du repos. Les séances H10 notées et les séances manuelles alimentent le journal ; éviter de saisir deux fois une même séance.
 
-## Compilation
+Une prévision est enregistrée avant son résultat et ne peut pas être réécrite. Son affichage demande au moins 21 transitions d’apprentissage, 20 évaluations futures et une erreur inférieure d’au moins 10 % aux deux références simples. La comparaison d’une charge demande aussi cinq situations proches et refuse l’extrapolation hors des charges observées. Ces seuils sont des garde-fous expérimentaux, pas une preuve d’efficacité clinique.
 
-Prérequis : Android SDK 35 et JDK 17.
+L’âge intervient dans les zones estimées. Des seuils personnels peuvent être renseignés ; les traitements déclarés suspendent l’estimation automatique. Le sexe reste un contexte facultatif, sans coefficient inventé. Taille et poids permettent le calcul descriptif de l’IMC, pas une note de récupération.
+
+Les [repères OMS](https://www.who.int/publications/i/item/9789240015128) sont généraux. L’application ne prédit pas une infection et ne prescrit pas une dose optimale d’exercice.
+
+## Architecture
+
+- `MonitorService`, `PmdClock`, `PolarAccDecoder` : BLE, horloge capteur, discontinuités, batterie, service de premier plan.
+- `StreamingQrs`, `EcgEngine` : repérage causal, règles, SQI, VFC et abstention.
+- `ExperimentalClassifier`, `ExperimentalWeights`, `ShapeReference`, `MorphologyModel` : modèle public figé et références personnelles distinctes.
+- `ExperimentPolicy` : blocage des alertes cardiaques physiques dans Lab, couvert par un test de régression.
+- `LocalRepository` : SQLite locale et migration transactionnelle des anciennes préférences.
+- `EventStore`, `EventHistory`, `ReportFiles`, `ReplayView` : brut, rapports, reprise et partage explicite.
+- `TrainingJournal`, `FitnessInsights`, `AdaptiveTwin`, `ForecastLedger` : journal, références, modèle et validation prospective.
+- `MainActivity`, `ProfileWizard`, `TimelineView`, `SportsPanel`, `FitnessTrendView` : interface native.
+
+Les anciennes préférences restent conservées après migration pour éviter une perte lors de l’import. Une suppression globale retire aussi les copies historiques héritées. Voir [PRIVACY.md](PRIVACY.md).
+
+## Installer ou compiler
+
+L’APK bêta s’installe directement sur Android 8 ou supérieur : Android Studio et une ancienne version ne sont pas nécessaires. Voir [INSTALLATION.txt](INSTALLATION.txt). Lab s’installe à côté de H10 Rhythm, sans importer son historique. Seules les mises à jour d’une installation Lab demandent une signature identique. Ne pas désinstaller sans sauvegarder ses données.
+
+Développement : JDK 17, Android SDK 35.
 
 ```bash
-./gradlew assembleDebug
+./gradlew assembleDebug assembleDebugAndroidTest lintDebug selfTest
 ```
 
-Pour une publication, créez votre propre clé de signature, copiez `keystore.properties.example` vers `keystore.properties` et renseignez vos valeurs. Ne publiez jamais ce fichier ni la clé privée. Sans ce fichier, la variante locale `release` utilise uniquement la clé de développement afin de faciliter les essais.
+Huit suites JVM sont exécutées, dont 14 scénarios ECG synthétiques de comportement logiciel. La CI les relance. Compiler les tests Android ne les exécute pas : les tests de stockage demandent `connectedDebugAndroidTest` sur un appareil de test. Ces vérifications ne constituent pas une validation clinique.
 
-## Données
+La variante release n’utilise plus silencieusement la clé debug. Renseigner une vraie configuration `keystore.properties` pour signer une distribution ; ne jamais publier ce fichier ou la clé.
 
-Les rapports sont enregistrés dans `Documents/PolarH10Monitor`. L’historique continu brut est conservé dans l’espace privé de l’application pendant 24 heures. Adaptive Twin, ses bilans, ses retours et ses coefficients restent dans l’espace privé de l’application et disposent d’une remise à zéro indépendante. Aucune donnée n’est transférée automatiquement.
+L’APK de cette bêta ne vaut pas validation du BLE sur 24 h, du rendu sur tous les écrans, ni du détecteur sur un H10 de référence.
 
-Consultez [PRIVACY.md](PRIVACY.md) pour le détail.
+## Licence et indépendance
 
-## Avertissement
-
-H10 Rhythm est un projet expérimental mono-dérivation. Il ne constitue pas un dispositif médical, ne fournit pas de diagnostic et ne peut pas exclure un trouble du rythme. Une détection doit être relue sur le tracé et discutée avec un professionnel de santé lorsque le contexte le justifie.
-
-Polar et Polar H10 sont des marques de Polar Electro Oy. Ce projet indépendant n’est ni affilié ni approuvé par Polar Electro.
-
-## Licence
-
-Code distribué sous licence MIT. Voir [LICENSE](LICENSE).
-
-Les textes préparés pour une fiche de distribution sont disponibles dans [STORE_LISTING.md](STORE_LISTING.md).
+Code sous [licence MIT](LICENSE), **hors poids expérimentaux du modèle**, soumis à la [notice de recherche non commerciale](MODEL_NOTICE.md) liée à Icentia (CC BY-NC-SA 4.0). Ne pas présenter l’ensemble comme libre d’usage commercial. Polar et Polar H10 appartiennent à Polar Electro Oy. Projet indépendant, non affilié à Polar. Les jeux de données ne sont pas inclus dans le dépôt ; aucun ECG personnel n’est publié.

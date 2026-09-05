@@ -13,9 +13,9 @@ public final class EcgEngineSelfTest {
             for(double marker:beats){boolean ventricular=marker<0;double bt=Math.abs(marker),dt=now-bt;if(dt<-.28)break;if(dt>.42)continue;if(ventricular)y+=-1350*Math.exp(-.5*Math.pow((dt+.025)/.045,2))+900*Math.exp(-.5*Math.pow((dt-.07)/.055,2));else y+=850*Math.exp(-.5*Math.pow(dt/.014,2))-180*Math.exp(-.5*Math.pow((dt-.028)/.018,2))+120*Math.exp(-.5*Math.pow((dt-.19)/.055,2));}
             engine.push((int)Math.round(y),start+Math.round(i*1000.0/EcgEngine.FS));
         }
-        boolean esv=false;for(EcgEngine.DetectionEvent e:events){System.out.println(e.type+" | "+e.detail);if(e.type.equals("ESV"))esv=true;}
+        boolean esv=false;for(EcgEngine.DetectionEvent e:events){System.out.println(e.type+" | "+e.detail);if(e.type.equals("ESV")||e.type.equals("PREMATURE"))esv=true;}
         EcgEngine.Snapshot s=engine.snapshot();System.out.println("bpm="+s.bpm+" esv="+s.esv+" events="+s.events+" signal="+s.signalGood);
-        if(!esv||s.esv<1)throw new AssertionError("L’ESV synthétique n’a pas été détectée");
+        if(!esv)throw new AssertionError("L’ESV synthétique n’a pas été signalée pour relecture");
 
         ArrayList<EcgEngine.DetectionEvent> contactEvents=new ArrayList<>();EcgEngine contactEngine=new EcgEngine(contactEvents::add);
         for(int i=0;i<30*EcgEngine.FS;i++){double now=i/(double)EcgEngine.FS,y=25*Math.sin(2*Math.PI*.2*now);double phase=(now-.7-.015*Math.sin(now*.5))%0.8;if(phase<0)phase+=.8;y+=900*Math.exp(-.5*Math.pow(phase/.014,2))-170*Math.exp(-.5*Math.pow((phase-.03)/.018,2));if(i==12*EcgEngine.FS+17)y=120000;if(i==12*EcgEngine.FS+18)y=-90000;contactEngine.push((int)Math.round(y),start+Math.round(i*1000.0/EcgEngine.FS));}

@@ -1,0 +1,99 @@
+{
+  "policy": "Laboratory only. Physical cardiac alerts disabled. No clinical/H10 validation. S class disabled. Bootstrap by record (2000, seed 20260905); noise records are correlated transformations, no noise CI interpretation.",
+  "mitdb_all_regression": {
+    "records": 44,
+    "hours": 21.67686324786325,
+    "reference_beats": 98944,
+    "qrs_sensitivity": 0.9972913971539457,
+    "qrs_ppv": 0.979988280978439,
+    "ventricular": {
+      "tp": 2118,
+      "fp_conservative": 331,
+      "fn": 4782,
+      "sensitivity": 0.30695652173913046,
+      "ppv": 0.8648427929767252,
+      "fp_per_hour": 15.269736964024425,
+      "sensitivity_ci95": [
+        0.1637246881024677,
+        0.44403239594578
+      ],
+      "ppv_ci95": [
+        0.5940619613832225,
+        0.9946939475204954
+      ]
+    },
+    "undecided_fraction_of_detected": 0.3737176113058764
+  },
+  "mitdb_evaluation": {
+    "records": 21,
+    "hours": 10.345775641025641,
+    "reference_beats": 46735,
+    "qrs_sensitivity": 0.9983096180592703,
+    "qrs_ppv": 0.9854888790317471,
+    "ventricular": {
+      "tp": 749,
+      "fp_conservative": 313,
+      "fn": 2400,
+      "sensitivity": 0.23785328675770084,
+      "ppv": 0.7052730696798494,
+      "fp_per_hour": 30.253894039497105,
+      "sensitivity_ci95": [
+        0.13136124442447136,
+        0.3171609683680006
+      ],
+      "ppv_ci95": [
+        0.3282937365010799,
+        1
+      ]
+    },
+    "undecided_fraction_of_detected": 0.3964472044441628
+  },
+  "icentia_evaluation": {
+    "records": 20,
+    "hours": 23.12397435897436,
+    "reference_beats": 99307,
+    "qrs_sensitivity": 0.9639803840615465,
+    "qrs_ppv": 0.8322972726245229,
+    "ventricular": {
+      "tp": 395,
+      "fp_conservative": 29,
+      "fn": 619,
+      "sensitivity": 0.3895463510848126,
+      "ppv": 0.9316037735849056,
+      "fp_per_hour": 1.2541096763820434,
+      "sensitivity_ci95": [
+        0.2,
+        0.4385072094995759
+      ],
+      "ppv_ci95": [
+        0.060561497326203216,
+        0.9707241910631741
+      ]
+    },
+    "undecided_fraction_of_detected": 0.5352767803580278
+  },
+  "noise_stress": {
+    "records": 8,
+    "hours": 3.941247863247863,
+    "reference_beats": 16768,
+    "qrs_sensitivity": 0.9762643129770993,
+    "qrs_ppv": 0.7895625331596972,
+    "ventricular": {
+      "tp": 2,
+      "fp_conservative": 1,
+      "fn": 1806,
+      "sensitivity": 0.0011061946902654867,
+      "ppv": 0.6666666666666666,
+      "fp_per_hour": 0.2537267471363575,
+      "sensitivity_ci95": [
+        0,
+        0.0022123893805309734
+      ],
+      "ppv_ci95": [
+        0.5,
+        1
+      ]
+    },
+    "undecided_fraction_of_detected": 0.6929532629141948
+  }
+}

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">H10 Rhythm</string>
+    <string name="app_name">H10 Rhythm Lab</string>
+    <string name="model_attribution">Modèle de recherche non commercial. Données : MIT-BIH (Moody et Mark) ; Icentia11k (Tan et collaborateurs, PhysioNet 2022), licence CC BY-NC-SA 4.0. Ni ces auteurs ni ces bases ne valident cette application.</string>
 </resources>

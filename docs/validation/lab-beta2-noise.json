@@ -1,0 +1,363 @@
+{
+  "replay": "BenchmarkReplay",
+  "protocol": "Physical signal converted to microvolts, polyphase resampling to 130 Hz, 30 s warm-up and 2 s terminal margin, one-to-one 150 ms matching. Labels evaluated before notification cooldown; QRS-only statistics are not arrhythmia classification accuracy.",
+  "warning": "Experimental, not H10/clinical validation. See EXPERIMENTAL_BETA2.md for split and candidate version. Unclassifiable reference Q counts conservatively against unsupported V predictions.",
+  "totals": {
+    "records": 8,
+    "hours": 3.941247863247863,
+    "V": {
+      "tp": 2,
+      "fp": 1,
+      "fn": 1806,
+      "sensitivity": 0.0011061946902654867,
+      "ppv": 0.6666666666666666,
+      "false_positives_per_hour": 0.2537267471363575
+    },
+    "S": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 380,
+      "sensitivity": 0,
+      "ppv": null,
+      "false_positives_per_hour": 0
+    },
+    "qrs_sensitivity": 0.9762643129770993,
+    "qrs_ppv": 0.7895625331596972
+  },
+  "records": [
+    {
+      "record": "118e00",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2239,
+      "predicted_beats": 3032,
+      "qrs_tp": 2147,
+      "sha256_dat": "e4174f9def17dff5a3520e14425b70a66b51c596b568bec52c193471f30c64d3",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 95,
+        "fp": 0,
+        "reference": 95
+      },
+      "unclassified": 2028,
+      "reasons_by_reference": {
+        "V": {
+          "MODEL_UNCERTAIN": 10,
+          "GLOBAL_SQI": 5,
+          "QRS_MISSED": 1
+        },
+        "S": {
+          "MODEL_UNCERTAIN": 48,
+          "GLOBAL_SQI": 38,
+          "QRS_MISSED": 3,
+          "NORMAL_AGREEMENT": 1,
+          "LOCAL_SQI": 1,
+          "CONTEXT_UNCERTAIN": 4
+        },
+        "other": {
+          "NORMAL_AGREEMENT": 1002,
+          "MODEL_UNCERTAIN": 89,
+          "CONTEXT_UNCERTAIN": 19,
+          "GLOBAL_SQI": 929,
+          "QRS_MISSED": 88,
+          "LOCAL_SQI": 1
+        }
+      }
+    },
+    {
+      "record": "118e06",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2239,
+      "predicted_beats": 2872,
+      "qrs_tp": 2175,
+      "sha256_dat": "ac6848a54bcdb05a3bf8266cca7970d97f8575334ec6e28bdd88b6d24e568ff1",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 95,
+        "fp": 0,
+        "reference": 95
+      },
+      "unclassified": 1830,
+      "reasons_by_reference": {
+        "V": {
+          "MODEL_UNCERTAIN": 10,
+          "QRS_MISSED": 1,
+          "GLOBAL_SQI": 5
+        },
+        "S": {
+          "MODEL_UNCERTAIN": 55,
+          "GLOBAL_SQI": 36,
+          "QRS_MISSED": 2,
+          "NORMAL_AGREEMENT": 1,
+          "LOCAL_SQI": 1
+        },
+        "other": {
+          "NORMAL_AGREEMENT": 1040,
+          "MODEL_UNCERTAIN": 163,
+          "GLOBAL_SQI": 813,
+          "QRS_MISSED": 61,
+          "CONTEXT_UNCERTAIN": 37,
+          "LOCAL_SQI": 7,
+          "DETECTOR_DISAGREEMENT": 3,
+          "WIDTH_OR_SHOCK": 4
+        }
+      }
+    },
+    {
+      "record": "118e12",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2239,
+      "predicted_beats": 2594,
+      "qrs_tp": 2190,
+      "sha256_dat": "7d25e59e68400aa40b435caed153b32f0333f2445f2f21d7409c612c0dc3761c",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 95,
+        "fp": 0,
+        "reference": 95
+      },
+      "unclassified": 1302,
+      "reasons_by_reference": {
+        "V": {
+          "MODEL_UNCERTAIN": 12,
+          "QRS_MISSED": 1,
+          "GLOBAL_SQI": 3
+        },
+        "S": {
+          "MODEL_UNCERTAIN": 73,
+          "GLOBAL_SQI": 12,
+          "QRS_MISSED": 1,
+          "CONTEXT_UNCERTAIN": 3,
+          "NORMAL_AGREEMENT": 2,
+          "LOCAL_SQI": 3,
+          "DETECTOR_DISAGREEMENT": 1
+        },
+        "other": {
+          "NORMAL_AGREEMENT": 1289,
+          "MODEL_UNCERTAIN": 416,
+          "QRS_MISSED": 47,
+          "CONTEXT_UNCERTAIN": 55,
+          "GLOBAL_SQI": 268,
+          "LOCAL_SQI": 21,
+          "WIDTH_OR_SHOCK": 22,
+          "DETECTOR_DISAGREEMENT": 10
+        }
+      }
+    },
+    {
+      "record": "118e24",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 2239,
+      "predicted_beats": 2242,
+      "qrs_tp": 2239,
+      "sha256_dat": "fe313df01e72c7134cc1caee92394d02966569ac4ef6f5cc571a4cd70d94d78c",
+      "V": {
+        "tp": 0,
+        "fn": 16,
+        "fp": 0,
+        "reference": 16
+      },
+      "S": {
+        "tp": 0,
+        "fn": 95,
+        "fp": 0,
+        "reference": 95
+      },
+      "unclassified": 394,
+      "reasons_by_reference": {
+        "V": {
+          "MODEL_UNCERTAIN": 16
+        },
+        "S": {
+          "MODEL_UNCERTAIN": 90,
+          "NORMAL_AGREEMENT": 2,
+          "LOCAL_SQI": 1,
+          "CONTEXT_UNCERTAIN": 2
+        },
+        "other": {
+          "NORMAL_AGREEMENT": 1845,
+          "MODEL_UNCERTAIN": 238,
+          "GLOBAL_SQI": 36,
+          "CONTEXT_UNCERTAIN": 9
+        }
+      }
+    },
+    {
+      "record": "119e00",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1953,
+      "predicted_beats": 2853,
+      "qrs_tp": 1859,
+      "sha256_dat": "776efbffe8a4f3ec2dc86d4cd0c82c2fc659c911412df4b1581d9dd09430d720",
+      "V": {
+        "tp": 0,
+        "fn": 436,
+        "fp": 0,
+        "reference": 436
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 2640,
+      "reasons_by_reference": {
+        "V": {
+          "GLOBAL_SQI": 413,
+          "QRS_MISSED": 23
+        },
+        "S": {},
+        "other": {
+          "GLOBAL_SQI": 1118,
+          "CONTEXT_UNCERTAIN": 113,
+          "NORMAL_AGREEMENT": 213,
+          "QRS_MISSED": 71,
+          "MODEL_UNCERTAIN": 1,
+          "WIDTH_OR_SHOCK": 1
+        }
+      }
+    },
+    {
+      "record": "119e06",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1953,
+      "predicted_beats": 2753,
+      "qrs_tp": 1891,
+      "sha256_dat": "08866e9afb2dc7e0dbcca61044b3da60d1361983f12a7155d77461a0639f0319",
+      "V": {
+        "tp": 0,
+        "fn": 436,
+        "fp": 0,
+        "reference": 436
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 2531,
+      "reasons_by_reference": {
+        "V": {
+          "GLOBAL_SQI": 421,
+          "QRS_MISSED": 14,
+          "CONTEXT_UNCERTAIN": 1
+        },
+        "S": {},
+        "other": {
+          "GLOBAL_SQI": 1096,
+          "CONTEXT_UNCERTAIN": 130,
+          "NORMAL_AGREEMENT": 222,
+          "QRS_MISSED": 48,
+          "MODEL_UNCERTAIN": 17,
+          "WIDTH_OR_SHOCK": 4
+        }
+      }
+    },
+    {
+      "record": "119e12",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1953,
+      "predicted_beats": 2434,
+      "qrs_tp": 1918,
+      "sha256_dat": "d0aa322b0d5e8ea56d5245ce6660fd9effc6a170b1772c08493438a51c08465c",
+      "V": {
+        "tp": 1,
+        "fn": 435,
+        "fp": 1,
+        "reference": 436
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 2143,
+      "reasons_by_reference": {
+        "V": {
+          "GLOBAL_SQI": 427,
+          "MODEL_UNCERTAIN": 2,
+          "MODEL_V_CANDIDATE": 1,
+          "QRS_MISSED": 4,
+          "CONTEXT_UNCERTAIN": 1,
+          "LOCAL_SQI": 1
+        },
+        "S": {},
+        "other": {
+          "GLOBAL_SQI": 919,
+          "CONTEXT_UNCERTAIN": 185,
+          "NORMAL_AGREEMENT": 289,
+          "MODEL_UNCERTAIN": 75,
+          "QRS_MISSED": 31,
+          "WIDTH_OR_SHOCK": 12,
+          "LOCAL_SQI": 5,
+          "SUPRAVENTRICULAR_UNVALIDATED": 1
+        }
+      }
+    },
+    {
+      "record": "119e24",
+      "channel": "MLII",
+      "seconds": 1773.5615384615385,
+      "reference_beats": 1953,
+      "predicted_beats": 1953,
+      "qrs_tp": 1951,
+      "sha256_dat": "affba7ddda1f1f86b2fb79449e8c79ff9b674a3b480b5ab12139c7c435941acb",
+      "V": {
+        "tp": 1,
+        "fn": 435,
+        "fp": 0,
+        "reference": 436
+      },
+      "S": {
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "reference": 0
+      },
+      "unclassified": 1499,
+      "reasons_by_reference": {
+        "V": {
+          "GLOBAL_SQI": 434,
+          "CONTEXT_UNCERTAIN": 1,
+          "MODEL_V_CANDIDATE": 1
+        },
+        "S": {},
+        "other": {
+          "GLOBAL_SQI": 861,
+          "CONTEXT_UNCERTAIN": 195,
+          "NORMAL_AGREEMENT": 453,
+          "QRS_MISSED": 2,
+          "MODEL_UNCERTAIN": 6
+        }
+      }
+    }
+  ],
+  "dataset": "NSTDB"
+}

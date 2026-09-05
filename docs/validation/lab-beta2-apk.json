@@ -1,0 +1,26 @@
+{
+  "file": "H10_Rhythm_Lab_v4.0.0_beta2.apk",
+  "application_id": "com.local.polarh10monitor.lab",
+  "version_code": 16,
+  "version_name": "4.0.0-beta2-lab",
+  "bytes": 425914,
+  "sha256": "75d39a3aa28e1dac1bc2872450b4175eaf0f06637ae5d902f630f3a8243178e3",
+  "certificate_sha256": "bb533ee88bce397a32939360fa031096071eae924ea4a088c15a515e9c7e1d57",
+  "signing": "Android debug certificate, separate laboratory package",
+  "physical_cardiac_alerts": false,
+  "report_directory": "Documents/PolarH10Lab",
+  "build": "assembleDebug, selfTest and lintDebug successful; assembleDebugAndroidTest also compiled",
+  "jvm_suites": 8,
+  "lint_errors": 0,
+  "lint_warnings": 27,
+  "numerical_parity_vectors": 200,
+  "numerical_parity_max_error": 0.0000033412238498176094,
+  "phone_installation_ble_and_pdf_rendering_verified": false,
+  "github_published": false,
+  "python_packages": {
+    "numpy": "2.5.2",
+    "scipy": "1.18.0",
+    "wfdb": "4.3.1",
+    "scikit-learn": "1.9.0"
+  }
+}

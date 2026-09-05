@@ -4,9 +4,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -17,4 +21,11 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
       - name: Compile and inspect
-        run: ./gradlew assembleDebug lintDebug
+        run: ./gradlew --no-daemon assembleDebug assembleDebugAndroidTest lintDebug selfTest
+      - name: Keep beta APK and static analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: h10-rhythm-lab-experimental-checks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/reports/lint-results-debug.*

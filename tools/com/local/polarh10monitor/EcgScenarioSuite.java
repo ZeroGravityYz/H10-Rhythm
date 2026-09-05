@@ -18,7 +18,7 @@ public final class EcgScenarioSuite {
         if(normal.snapshot.rmssdMs<=0)throw new AssertionError("VFC absente sur rythme variable");
 
         ArrayList<Beat> pvc=regular(35,.80,.015);replaceWithPremature(pvc,12.0,.53,1.07,true);
-        Outcome pvcResult=run(35,pvc,null,new MorphologyModel());require(has(pvcResult,"ESV")||has(pvcResult,"WIDE_PREMATURE"),"ESV isolée",pvcResult);
+        Outcome pvcResult=run(35,pvc,null,new MorphologyModel());require(ectopicReview(pvcResult),"ESV isolée signalée (type non garanti)",pvcResult);
 
         ArrayList<Beat> pac=regular(35,.80,.015);replaceWithPremature(pac,12.0,.54,.94,false);
         Outcome pacResult=run(35,pac,null,new MorphologyModel());require(has(pacResult,"ESA")||has(pacResult,"PREMATURE"),"ESA isolée",pacResult);
@@ -32,17 +32,18 @@ public final class EcgScenarioSuite {
 
         ArrayList<Beat> movedPvc=regular(35,.80,.015);replaceWithPremature(movedPvc,12.0,.53,1.07,true);
         Movement shake=(time,sample)->time>=12.0&&time<13.0?new int[]{(sample%2==0?420:-260),120,920}:new int[]{0,0,1000};
-        Outcome quarantined=run(35,movedPvc,null,new MorphologyModel(),shake);require(noCardiacEvents(quarantined),"ESV apparente pendant secousse mise en quarantaine",quarantined);
+        // ACC alone must not hide an injected true ectopic beat in an otherwise clean ECG.
+        Outcome quarantined=run(35,movedPvc,null,new MorphologyModel(),shake);require(ectopicReview(quarantined),"ESV propre conservée malgré mouvement ACC",quarantined);
 
         ArrayList<Beat> afterMotionPvc=regular(38,.80,.015);replaceWithPremature(afterMotionPvc,17.0,.53,1.07,true);
-        Outcome afterMotion=run(38,afterMotionPvc,null,new MorphologyModel(),shake);require(has(afterMotion,"ESV")||has(afterMotion,"WIDE_PREMATURE"),"ESV après retour au calme",afterMotion);
+        Outcome afterMotion=run(38,afterMotionPvc,null,new MorphologyModel(),shake);require(ectopicReview(afterMotion),"ESV après retour au calme",afterMotion);
 
         ArrayList<Beat> gradual=new ArrayList<>();double t=.7;while(t<70){gradual.add(new Beat(t,false));double progress=Math.min(1,t/55);t+=.78-(.30*progress);}
         Outcome exercise=run(70,gradual,null,new MorphologyModel());if(has(exercise,"REGULAR_TACHY"))throw failure("accélération sinusale progressive classée TSV",exercise);
         System.out.println("OK  effort progressif sans fausse TSV | "+summary(exercise));
 
         ArrayList<Beat> abrupt=new ArrayList<>();t=.7;while(t<18){abrupt.add(new Beat(t,false));t+=.80;}while(t<42){abrupt.add(new Beat(t,false));t+=.35;}Outcome fast=run(42,abrupt,null,new MorphologyModel());require(has(fast,"TACHY")||has(fast,"REGULAR_TACHY"),"tachycardie brusque prolongée",fast);for(EcgEngine.DetectionEvent e:fast.events)if(!"TACHY".equals(e.type)&&!"REGULAR_TACHY".equals(e.type))throw failure("fausse classification pendant la tachycardie: "+e.type,fast);
-        Outcome slow=run(42,regular(42,1.72,.025),null,new MorphologyModel());require(has(slow,"BRADY"),"bradycardie prolongée",slow);
+        Outcome slow=run(42,regular(42,1.72,.025),null,new MorphologyModel());require(has(slow,"BRADY")&&!has(slow,"PAUSE"),"bradycardie sans fausse pause de latence",slow);
 
         ArrayList<Beat> irregular=new ArrayList<>();double[] pattern={.62,1.05,.70,1.15,.64,1.00,.74,1.12};t=.7;int k=0;while(t<70){irregular.add(new Beat(t,false));t+=pattern[k++%pattern.length];}Outcome variable=run(70,irregular,null,new MorphologyModel());require(has(variable,"IRREGULAR"),"rythme très irrégulier",variable);
 
@@ -50,7 +51,7 @@ public final class EcgScenarioSuite {
 
         MorphologyModel learned=new MorphologyModel();ArrayList<Beat> longRun=regular(450,.80,.025);replaceWithPremature(longRun,420,.52,1.08,true);Outcome integrated=run(450,longRun,null,learned);if(!learned.isReady())throw new AssertionError("Le profil personnel n'est pas prêt après 500 battements propres");require(hasReadyMorphologyEvent(integrated),"ESV après apprentissage ML",integrated);
 
-        System.out.println("14 scenarios continus OK: rythme, ectopies, contact, bruit, plateau, mouvement H10, effort, épisodes longs, pause et ML prêt.");
+        System.out.println("14 scénarios de politique bêta2 OK. Les ectopies synthétiques peuvent être INDETERMINEES et signalées pour relecture, sans alerte typée. Ceci ne signifie pas 14 classifications correctes.");
     }
 
     private static Outcome run(double duration,List<Beat> beats,Noise noise,MorphologyModel model){return run(duration,beats,noise,model,null);}
@@ -60,7 +61,8 @@ public final class EcgScenarioSuite {
     private static void replaceWithPremature(ArrayList<Beat> beats,double around,double early,double after,boolean ventricular){int position=0;while(position<beats.size()&&beats.get(position).time<around)position++;if(position<=0||position>=beats.size()-1)return;double previous=beats.get(position-1).time;beats.remove(position);double ectopic=previous+early;beats.add(position,new Beat(ectopic,ventricular));double next=ectopic+after;beats.set(position+1,new Beat(next,false));for(int i=position+2;i<beats.size();i++)beats.set(i,new Beat(next+(i-position-1)*.80,false));}
     private static boolean has(Outcome o,String type){for(EcgEngine.DetectionEvent e:o.events)if(type.equals(e.type))return true;return false;}
     private static boolean noCardiacEvents(Outcome o){for(EcgEngine.DetectionEvent e:o.events)if(!"PAUSE".equals(e.type))return false;return !has(o,"PAUSE");}
-    private static boolean hasReadyMorphologyEvent(Outcome o){for(EcgEngine.DetectionEvent e:o.events)if(("ESV".equals(e.type)||"WIDE_PREMATURE".equals(e.type))&&e.personalModelReady)return true;return false;}
+    private static boolean ectopicReview(Outcome o){return has(o,"ESV")||has(o,"WIDE_PREMATURE")||has(o,"PREMATURE");}
+    private static boolean hasReadyMorphologyEvent(Outcome o){for(EcgEngine.DetectionEvent e:o.events)if(("ESV".equals(e.type)||"WIDE_PREMATURE".equals(e.type)||"PREMATURE".equals(e.type))&&e.personalModelReady)return true;return false;}
     private static void require(boolean ok,String scenario,Outcome outcome){if(!ok)throw failure("scenario manqué: "+scenario,outcome);System.out.println("OK  "+scenario+" | "+summary(outcome));}
     private static AssertionError failure(String message,Outcome o){return new AssertionError(message+" | "+summary(o));}
     private static String summary(Outcome o){StringBuilder b=new StringBuilder("events=");for(EcgEngine.DetectionEvent e:o.events)b.append(e.type).append(',');return b+" beats="+o.snapshot.beats+" bpm="+o.snapshot.bpm+" SQI="+Math.round(o.snapshot.signalQualityPercent)+"%";}

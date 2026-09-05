@@ -1,16 +1,32 @@
-H10 RHYTHM — INSTALLATION SANS ANDROID STUDIO
+H10 RHYTHM LAB 4.0 BÊTA 3 — EXPÉRIMENTAL
 
-1. Télécharge H10_Rhythm_v3.0.1_test.apk depuis la dernière publication GitHub, puis copie-le sur le téléphone Android.
-2. Ouvre le fichier puis autorise temporairement l’installation d’applications inconnues pour l’application Fichiers.
-3. Lance H10 Rhythm et accepte « Appareils à proximité » et « Notifications ».
-4. Porte la ceinture, humidifie ses électrodes et ferme Polar Beat / Polar Flow.
-5. Touche « Démarrer la surveillance ».
-6. Dans Réglages → « Autoriser le fonctionnement continu », choisis Batterie → Sans restriction.
-7. Sur Samsung : Batterie → Limites d’utilisation en arrière-plan → Applications jamais en veille, ajoute H10 Rhythm.
+Téléchargement :
+https://github.com/ZeroGravityYz/H10-Rhythm/releases/tag/v4.0.0-beta3-lab
 
-Une notification permanente doit rester visible pendant la surveillance.
-Les passages apparaissent immédiatement dans Historique. Le PDF devient disponible environ 30 secondes plus tard.
-Le modèle personnel devient prêt après 500 battements propres et reste enregistré sur le téléphone.
-Quand le Polar H10 l’autorise, l’application utilise aussi son capteur de mouvement pour filtrer les manipulations de ceinture.
+1. Télécharge H10_Rhythm_Lab_v4.0.0_beta3.apk dans les fichiers de la préversion.
+2. Ouvre-le sur Android 8 ou supérieur et autorise temporairement l’installation depuis Fichiers.
+3. Aucun ancien APK n’est nécessaire. H10 Rhythm Lab s’installe à côté de H10 Rhythm.
+   Si Lab est déjà installé avec la même signature, Android proposera une mise à jour.
+   Ne désinstalle pas une application contenant tes données sans exporter d’abord celles-ci.
+4. Autorise « Appareils à proximité » et les notifications techniques.
+5. Porte et humidifie la ceinture, puis démarre l’enregistrement.
+   Ne lance pas deux applications connectées à la ceinture pour ce test.
 
-IMPORTANT : outil expérimental mono-dérivation, non validé comme dispositif médical. Il ne remplace pas un ECG médical ni l’avis d’un professionnel.
+L’historique privé Lab et ses rapports Documents/PolarH10Lab sont séparés de l’ancienne application.
+Aucune migration de l’historique entre les deux applications n’est effectuée.
+
+Aujourd’hui : état de connexion, batterie et indicateurs de session.
+ECG : tracé et marquage d’un ressenti.
+Forme : profil, bilan au calme et journal de séances.
+Historique : recherche, favoris, lecture, export et suppression.
+Réglages : zones, durée de conservation et remise à zéro.
+
+IMPORTANT
+Aucune alerte cardiaque sonore ou vibrante dans cette version Lab.
+Les hypothèses sont enregistrées pour relecture, pas pour diagnostiquer.
+L’absence de passage enregistré n’exclut pas une anomalie.
+Les notifications techniques de connexion et d’enregistrement restent possibles.
+Les restrictions de batterie Android peuvent interrompre l’acquisition.
+Le fonctionnement continu 24 h/24 n’est pas garanti.
+L’installation et le Bluetooth de cette compilation n’ont pas été vérifiés sur téléphone.
+Usage expérimental non commercial : voir MODEL_NOTICE.md.

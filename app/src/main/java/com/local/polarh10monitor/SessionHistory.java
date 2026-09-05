@@ -18,24 +18,22 @@ public final class SessionHistory {
     private SessionHistory(){}
 
     public static synchronized void add(Context context,Record record){
-        if(record==null||record.endMs-record.startMs<30_000)return;
-        ArrayList<Record> all=new ArrayList<>(list(context));all.add(0,record);
-        JSONArray array=new JSONArray();for(int i=0;i<Math.min(LIMIT,all.size());i++)array.put(all.get(i).json());
-        context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(KEY,array.toString()).apply();
+        if(record==null||record.startMs<=0||record.endMs-record.startMs<30_000||record.avgBpm<=0)return;
+        LocalRepository.get(context).put("session",String.valueOf(record.startMs),record.startMs,record.json());
     }
 
     public static synchronized List<Record> list(Context context){
-        ArrayList<Record> out=new ArrayList<>();try{String data=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(KEY,"[]");JSONArray a=new JSONArray(data);for(int i=0;i<a.length();i++)out.add(Record.from(a.getJSONObject(i)));}catch(Exception ignored){}
+        ArrayList<Record> out=new ArrayList<>();for(JSONObject o:LocalRepository.get(context).list("session"))out.add(Record.from(o));
         out.sort(Comparator.comparingLong((Record r)->r.startMs).reversed());return Collections.unmodifiableList(out);
     }
 
     public static Aggregate aggregate(Context context,int days){
-        long cutoff=days<=0?0:System.currentTimeMillis()-days*86_400_000L;Aggregate a=new Aggregate();double weightedHr=0,weightedQuality=0,rmssd=0,sdnn=0;int hrvCount=0;
-        for(Record r:list(context)){if(r.endMs<cutoff)continue;long duration=Math.max(1,r.endMs-r.startMs);a.sessions++;a.durationMs+=duration;a.moderateMs+=r.moderateMs;a.vigorousMs+=r.vigorousMs;a.events+=r.events;a.maxBpm=Math.max(a.maxBpm,r.maxBpm);if(r.minBpm>0)a.minBpm=a.minBpm==0?r.minBpm:Math.min(a.minBpm,r.minBpm);weightedHr+=r.avgBpm*duration;weightedQuality+=r.signalQuality*duration;if(r.rmssd>0){rmssd+=r.rmssd;sdnn+=r.sdnn;hrvCount++;}}
-        if(a.durationMs>0){a.avgBpm=weightedHr/a.durationMs;a.signalQuality=weightedQuality/a.durationMs;}if(hrvCount>0){a.rmssd=rmssd/hrvCount;a.sdnn=sdnn/hrvCount;}return a;
+        long cutoff=days<=0?0:System.currentTimeMillis()-days*86_400_000L;Aggregate a=new Aggregate();double weightedHr=0,weightedQuality=0,rmssd=0,sdnn=0;int hrvCount=0;long hrDuration=0;
+        for(Record r:list(context)){if(r.endMs<cutoff)continue;long duration=Math.max(1,r.endMs-r.startMs);a.sessions++;a.durationMs+=duration;a.moderateMs+=r.moderateMs;a.vigorousMs+=r.vigorousMs;a.events+=r.events;a.maxBpm=Math.max(a.maxBpm,r.maxBpm);if(r.minBpm>0)a.minBpm=a.minBpm==0?r.minBpm:Math.min(a.minBpm,r.minBpm);if(r.avgBpm>0){weightedHr+=r.avgBpm*duration;hrDuration+=duration;}weightedQuality+=r.signalQuality*duration;if(r.rmssd>0){rmssd+=r.rmssd;sdnn+=r.sdnn;hrvCount++;}}
+        if(a.durationMs>0){a.avgBpm=hrDuration==0?0:weightedHr/hrDuration;a.signalQuality=weightedQuality/a.durationMs;}if(hrvCount>0){a.rmssd=rmssd/hrvCount;a.sdnn=sdnn/hrvCount;}return a;
     }
 
-    public static synchronized void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(KEY).apply();}
+    public static synchronized void clear(Context context){LocalRepository.get(context).clear("session");context.getSharedPreferences("session_history",0).edit().remove("sessions_v1").apply();LocalRepository.get(context).clear("forecast");}
 
     public static final class Aggregate{public int sessions,events,minBpm,maxBpm;public long durationMs,moderateMs,vigorousMs;public double avgBpm,signalQuality,rmssd,sdnn;}
 

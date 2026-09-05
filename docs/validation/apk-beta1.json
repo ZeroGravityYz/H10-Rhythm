@@ -1,0 +1,14 @@
+{
+  "file": "H10_Rhythm_v4.0.0_beta1.apk",
+  "applicationId": "com.local.polarh10monitor",
+  "versionCode": 15,
+  "versionName": "4.0.0-beta1",
+  "sizeBytes": 325883,
+  "sha256": "a78d2d8a69608cd522ccce9851fd8dbf0cc730a07f84f68f8e9f20786c58bd67",
+  "certificateSha256": "bb533ee88bce397a32939360fa031096071eae924ea4a088c15a515e9c7e1d57",
+  "sameCertificateAs": "H10_Rhythm_v3.1.0_test.apk",
+  "signing": "development beta key, not production release signing",
+  "checks": "assembleDebug assembleDebugAndroidTest lintDebug selfTest: successful; lint 0 errors, 27 warnings",
+  "hardwareTests": "not executed: no connected device or configured emulator",
+  "medicalValidation": "not achieved; see ../VALIDATION_V4.md"
+}

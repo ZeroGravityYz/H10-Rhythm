@@ -1,5 +1,36 @@
 # Historique des versions
 
+## 4.0.0-beta3-lab — 2026-09-05
+
+- Préversion publique expérimentale H10 Rhythm Lab : application et historique séparés de H10 Rhythm.
+- Libellés centrés sur l’enregistrement, sans promesse de surveillance ; un mouvement détecté n’est plus présenté comme un mouvement déjà filtré.
+- Installation simplifiée, téléchargement direct, notice du modèle et résultats publics regroupés dans la documentation.
+- Vérifications automatiques renforcées : huit suites JVM, compilation des tests Android et analyse statique.
+- Moteur et poids identiques à la bêta 2 : aucune nouvelle revendication de performance. Les alertes cardiaques physiques restent désactivées.
+
+## 4.0.0-beta2-lab — 2026-09-05
+
+- Application laboratoire séparée, historique et dossier d'exports isolés ; aucune mise à jour de l'application installée.
+- Détecteur causal d'énergie, horodatage retardé corrigé, suppression du décalage continu avant SQI et garde contre les fausses pauses dues à la latence.
+- Modèle supervisé 16 arbres entraîné sur 62 enregistrements publics, évalué sur 41 autres ; inférence locale et test de parité Python/Java.
+- Indéterminé par défaut, compteur visible, contexte morphologique local et annotations personnelles distinctes de l'entraînement public.
+- Classe ESA désactivée ; alertes cardiaques physiques bloquées dans Lab, car les évaluations externes et sous bruit restent insuffisantes.
+- Huit suites JVM, essais bruit NSTDB, comparaisons MIT-BIH/Icentia et rapport explicite des événements manqués et des faux positifs.
+- Notice des poids de recherche non commerciaux Icentia. Aucun envoi des ECG privés, aucune publication GitHub.
+- Voir `docs/EXPERIMENTAL_BETA2.md` : les gains de repérage QRS ne sont pas une fiabilité médicale.
+
+## 4.0.0-beta1 — 2026-09-05
+
+- Navigation Aujourd’hui / ECG / Forme / Historique, réglages séparés, profil guidé, détails dépliables et graphiques avec unités/dates.
+- Historique SQLite, migration transactionnelle, favoris, recherche, filtres, suppression par sélection et nettoyage des copies héritées.
+- Horloge PMD, ECG/ACC alignés, détection de doublons et de trous ; invalidation d’un bilan interrompu ; VFC calculée sur les paires NN contiguës.
+- Prototypes d’artefacts multiples persistants, annotations conservées indépendamment des rapports et abstention en cas de labels contradictoires.
+- Données brutes signées non tronquées ; conservation 24/72/168 h ; contexte ancré sur l’événement ; PDF multipage, reprise depuis le JSONL, relecture et partage explicite.
+- Journal de séances, zones personnalisées, prévisions prospectives non réécrites et comparées à deux références ; retrait de la note de conditionnement et de la dose optimale automatique.
+- Sept suites JVM et 14 scénarios synthétiques ; test d’intégration Android préparé ; évaluation publique reproductible sur MIT-BIH.
+- Résultats MIT-BIH insuffisants, avec de nombreuses anomalies manquées : cette bêta n’est pas une validation médicale. Voir docs/VALIDATION_V4.md.
+- Aucun repli silencieux de la signature release sur la clé debug.
+
 ## 3.1.0-test
 
 - remplacement du menu Forme par **Adaptive Twin**, centré sur une fourchette de charge, une prévision du lendemain et l’explication de chaque facteur plutôt que sur un score opaque ;

@@ -35,28 +35,25 @@ public final class FitnessInsights {
     }
 
     public static synchronized void addMorning(Context context,Morning record){
-        ArrayList<Morning> all=new ArrayList<>(mornings(context));
-        long day=dayStart(record.timestampMs);
-        all.removeIf(item->dayStart(item.timestampMs)==day);
-        all.add(record);all.sort(Comparator.comparingLong((Morning item)->item.timestampMs).reversed());
-        JSONArray array=new JSONArray();for(int i=0;i<Math.min(MORNING_LIMIT,all.size());i++)array.put(all.get(i).json());
-        context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString(MORNINGS,array.toString()).apply();
+        LocalRepository db=LocalRepository.get(context);long day=dayStart(record.timestampMs);
+        Calendar next=Calendar.getInstance();next.setTimeInMillis(day);next.add(Calendar.DATE,1);
+        db.replaceDay("morning",String.valueOf(record.timestampMs),record.timestampMs,record.json(),day,next.getTimeInMillis());
     }
 
     public static List<Morning> mornings(Context context){
         ArrayList<Morning> out=new ArrayList<>();
-        try{JSONArray array=new JSONArray(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(MORNINGS,"[]"));for(int i=0;i<array.length();i++)out.add(Morning.from(array.getJSONObject(i)));}catch(Exception ignored){}
+        for(JSONObject o:LocalRepository.get(context).list("morning"))out.add(Morning.from(o));
         out.sort(Comparator.comparingLong((Morning item)->item.timestampMs).reversed());return Collections.unmodifiableList(out);
     }
 
-    public static synchronized void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().clear().apply();}
+    public static synchronized void clear(Context context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().clear().apply();LocalRepository.get(context).clear("morning");}
 
     public static Summary summarize(Context context){
-        Profile p=profile(context);List<Morning> all=mornings(context);Morning current=all.isEmpty()?null:all.get(0);
+        Profile p=profile(context);List<Morning> all=mornings(context);Morning current=null;for(Morning m:all)if(m.continuityVerified){current=m;break;}
         boolean today=current!=null&&dayStart(current.timestampMs)==dayStart(System.currentTimeMillis());
         ArrayList<Morning> reference=new ArrayList<>();
         long cutoff=System.currentTimeMillis()-60L*86_400_000L;
-        for(Morning m:all)if(m!=current&&m.timestampMs>=cutoff&&m.quality>=80&&m.rmssd>0&&m.restingHr>0)reference.add(m);
+        for(Morning m:all)if(m!=current&&m.continuityVerified&&m.timestampMs>=cutoff&&m.quality>=80&&m.rmssd>0&&m.restingHr>0)reference.add(m);
 
         double baseHr=medianMorning(reference,true),baseRmssd=medianMorning(reference,false);
         if(baseHr<=0&&current!=null)baseHr=current.restingHr;if(baseRmssd<=0&&current!=null)baseRmssd=current.rmssd;
@@ -85,8 +82,8 @@ public final class FitnessInsights {
                 if(marked){state="Écart inhabituel";stateDetail="Allège la journée et vérifie le sommeil, la charge récente et d’éventuels symptômes.";}
                 else if(score<55){state="Récupération réduite";stateDetail="Une journée légère est plus cohérente avec les signaux et le contexte du jour.";}
                 else if(score<70){state="Charge accumulée";stateDetail="La récupération paraît un peu diminuée, sans cause spécifique identifiable.";}
-                else if(score<86){state="Disponible";stateDetail="Les indicateurs sont globalement proches de ta référence personnelle.";}
-                else{state="Optimal";stateDetail="Les indicateurs du jour sont favorables par rapport à ton fonctionnement habituel.";}
+                else if(score<86){state="Proche de tes habitudes";stateDetail="Les indicateurs sont globalement proches de ta référence personnelle.";}
+                else{state="Mesures favorables";stateDetail="Les indicateurs du jour sont favorables par rapport à ton fonctionnement habituel.";}
             }
         }
         if(why.isEmpty())why.add(today?"Aucun écart important n’est visible dans les données disponibles.":"Aucune interprétation n’est produite sans bilan matinal standardisé.");
@@ -106,19 +103,8 @@ public final class FitnessInsights {
         int equivalent=observedModerate+2*observedVigorous;
         int declared=p.weeklyModerate+2*p.weeklyVigorous;
         int activityBasis=Math.max(equivalent,declared);
-        int adaptation=0;if(p.complete()){
-            adaptation+=Math.min(65,Math.round(activityBasis/300f*65));
-            adaptation+=Math.min(15,p.trainingYears*3);
-            adaptation+=Math.min(10,p.strengthDays*5);
-            if(baseHr>=45&&baseHr<70&&!p.hrMedication)adaptation+=Math.min(10,(int)Math.round((70-baseHr)/2.5));
-        }
-        String training;
-        if(!p.complete())training="Profil à compléter";
-        else if(adaptation<30)training="Début de parcours";
-        else if(adaptation<50)training="Activité occasionnelle";
-        else if(adaptation<70)training="Entraînement régulier";
-        else if(adaptation<85)training="Adaptation cardio en progression";
-        else training="Profil fortement conditionné";
+        int adaptation=0; // Kept for storage/API compatibility; not a physiological fitness score.
+        String training=p.complete()?"Habitudes renseignées":"Profil à compléter";
         String confidence=all.size()>=28?"Élevée":all.size()>=14?"Bonne":all.size()>=7?"En progression":"Provisoire";
         double trend7=trend(all,7),trendPrevious=trendRange(all,7,28);double hrvTrend=trendPrevious>0?100*(trend7-trendPrevious)/trendPrevious:0;
         return new Summary(p,current,today,all.size(),reference.size(),state,stateDetail,score,confidence,training,adaptation,
@@ -126,7 +112,7 @@ public final class FitnessInsights {
     }
 
     private static double trend(List<Morning> all,int days){return trendRange(all,0,days);}
-    private static double trendRange(List<Morning> all,int fromDays,int toDays){long now=System.currentTimeMillis(),newer=now-fromDays*86_400_000L,older=now-toDays*86_400_000L;ArrayList<Double>x=new ArrayList<>();for(Morning m:all)if(m.timestampMs<=newer&&m.timestampMs>=older&&m.rmssd>0&&m.quality>=80)x.add(m.rmssd);return median(x);}
+    private static double trendRange(List<Morning> all,int fromDays,int toDays){long now=System.currentTimeMillis(),newer=now-fromDays*86_400_000L,older=now-toDays*86_400_000L;ArrayList<Double>x=new ArrayList<>();for(Morning m:all)if(m.continuityVerified&&m.timestampMs<=newer&&m.timestampMs>=older&&m.rmssd>0&&m.quality>=80)x.add(m.rmssd);return median(x);}
     private static double medianMorning(List<Morning>x,boolean hr){ArrayList<Double>v=new ArrayList<>();for(Morning m:x)v.add(hr?m.restingHr:m.rmssd);return median(v);}
     private static double madMorning(List<Morning>x,boolean hr,double center){ArrayList<Double>v=new ArrayList<>();for(Morning m:x)v.add(Math.abs((hr?m.restingHr:m.rmssd)-center));return median(v);}
     private static double medianLogRmssd(List<Morning>x){ArrayList<Double>v=new ArrayList<>();for(Morning m:x)v.add(Math.log(Math.max(1,m.rmssd)));return median(v);}
@@ -145,11 +131,11 @@ public final class FitnessInsights {
     }
 
     public static final class Morning{
-        public final long timestampMs;public final double restingHr,rmssd,sdnn,quality;public final int nnCount,sleepQuality,stress,soreness;public final boolean symptoms,alcohol,hardTraining,experimentFollowed;public final String experimentId;
+        public boolean continuityVerified;public final long timestampMs;public final double restingHr,rmssd,sdnn,quality;public final int nnCount,sleepQuality,stress,soreness;public final boolean symptoms,alcohol,hardTraining,experimentFollowed;public final String experimentId;
         public Morning(long timestampMs,double restingHr,double rmssd,double sdnn,double quality,int nnCount,int sleepQuality,int stress,int soreness,boolean symptoms,boolean alcohol,boolean hardTraining){this(timestampMs,restingHr,rmssd,sdnn,quality,nnCount,sleepQuality,stress,soreness,symptoms,alcohol,hardTraining,"",false);}
         public Morning(long timestampMs,double restingHr,double rmssd,double sdnn,double quality,int nnCount,int sleepQuality,int stress,int soreness,boolean symptoms,boolean alcohol,boolean hardTraining,String experimentId,boolean experimentFollowed){this.timestampMs=timestampMs;this.restingHr=restingHr;this.rmssd=rmssd;this.sdnn=sdnn;this.quality=quality;this.nnCount=nnCount;this.sleepQuality=sleepQuality;this.stress=stress;this.soreness=soreness;this.symptoms=symptoms;this.alcohol=alcohol;this.hardTraining=hardTraining;this.experimentId=experimentId==null?"":experimentId;this.experimentFollowed=experimentFollowed;}
-        JSONObject json(){JSONObject o=new JSONObject();try{o.put("time",timestampMs);o.put("hr",restingHr);o.put("rmssd",rmssd);o.put("sdnn",sdnn);o.put("quality",quality);o.put("nn",nnCount);o.put("sleep",sleepQuality);o.put("stress",stress);o.put("soreness",soreness);o.put("symptoms",symptoms);o.put("alcohol",alcohol);o.put("hard",hardTraining);o.put("experiment",experimentId);o.put("experimentFollowed",experimentFollowed);}catch(Exception ignored){}return o;}
-        static Morning from(JSONObject o){return new Morning(o.optLong("time"),o.optDouble("hr"),o.optDouble("rmssd"),o.optDouble("sdnn"),o.optDouble("quality"),o.optInt("nn"),o.optInt("sleep",3),o.optInt("stress",3),o.optInt("soreness",3),o.optBoolean("symptoms"),o.optBoolean("alcohol"),o.optBoolean("hard"),o.optString("experiment"),o.optBoolean("experimentFollowed"));}
+        JSONObject json(){JSONObject o=new JSONObject();try{o.put("continuityVerified",continuityVerified);o.put("time",timestampMs);o.put("hr",restingHr);o.put("rmssd",rmssd);o.put("sdnn",sdnn);o.put("quality",quality);o.put("nn",nnCount);o.put("sleep",sleepQuality);o.put("stress",stress);o.put("soreness",soreness);o.put("symptoms",symptoms);o.put("alcohol",alcohol);o.put("hard",hardTraining);o.put("experiment",experimentId);o.put("experimentFollowed",experimentFollowed);}catch(Exception ignored){}return o;}
+        static Morning from(JSONObject o){Morning result=new Morning(o.optLong("time"),o.optDouble("hr"),o.optDouble("rmssd"),o.optDouble("sdnn"),o.optDouble("quality"),o.optInt("nn"),o.optInt("sleep",3),o.optInt("stress",3),o.optInt("soreness",3),o.optBoolean("symptoms"),o.optBoolean("alcohol"),o.optBoolean("hard"),o.optString("experiment"),o.optBoolean("experimentFollowed"));result.continuityVerified=o.optBoolean("continuityVerified",false);return result;}
     }
 
     public static final class Summary{

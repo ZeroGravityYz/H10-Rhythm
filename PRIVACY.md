@@ -1,30 +1,34 @@
-# Confidentialité
+# Confidentialité — H10 Rhythm 4.0 bêta
 
-H10 Rhythm traite les données ECG localement sur l’appareil Android.
+La bêta 2 Lab est une installation distincte. Son modèle général est entraîné hors téléphone uniquement sur des ECG publics ; aucun ECG personnel n'a été utilisé pour cet entraînement. Sur téléphone, les poids restent figés, les annotations alimentent le module personnel local et les rapports Lab utilisent un dossier séparé. Aucune transmission automatique ni alerte cardiaque physique n'est activée dans Lab.
 
-## Données traitées
+L’analyse ECG et les calculs de suivi restent sur le téléphone. L’application n’a pas de permission Internet, compte, publicité ou outil d’audience.
 
-- signal ECG brut reçu du Polar H10 ;
-- fréquence cardiaque, qualité du signal et événements calculés ;
-- modèle morphologique personnel ;
-- choix de l’utilisateur sur les passages enregistrés.
-- contexte Adaptive Twin renseigné par l’utilisateur : âge, taille, poids, habitudes et contexte sportif ;
-- retours d’effort perçu, expériences personnelles et coefficients du modèle dose-réponse ;
-- bilans matinaux locaux : FC de repos, RMSSD, SDNN, qualité du signal et contexte déclaré.
+## Données conservées
 
-## Stockage
+- ECG brut, horodatages et résumés de sessions ;
+- événements, annotations, prototypes morphologiques ;
+- profil renseigné, séances, effort perçu, bilans matinaux et contexte ;
+- coefficients du modèle de forme et prévisions enregistrées à l’avance.
 
-- l’historique brut continu est conservé jusqu’à 24 heures dans l’espace privé de l’application ;
-- les événements sélectionnés sont exportés dans `Documents/PolarH10Monitor` sous forme de PDF, JSON et JSONL ;
-- le modèle personnel et l’historique affiché sont conservés dans le stockage privé de l’application.
-- le contexte Adaptive Twin et les bilans matinaux sont conservés dans le stockage privé de l’application, avec un maximum de 180 bilans.
+Les données structurées sont dans une base SQLite privée. Le profil, certains paramètres et les coefficients restent dans les préférences privées Android. Les anciennes préférences historiques sont conservées pendant la migration ; elles sont retirées lors des suppressions correspondantes.
 
-## Transfert
+Le brut continu est conservé 24 h par défaut, réglable à 72 h ou 7 jours. Les nouveaux fichiers utilisent des entiers 32 bits pour ne pas tronquer les valeurs signées 24 bits de la H10. Les anciennes captures ne sont pas réécrites.
 
-L’application n’intègre aucun compte, outil publicitaire, outil d’analyse d’audience ou transfert réseau. Un fichier ne quitte le téléphone que si l’utilisateur le partage lui-même depuis Android.
+Les rapports et leur JSONL sont dans Documents/PolarH10Monitor sur Android 10 et plus ; sur Android 8–9, dans le dossier Documents privé externe de l’application. Un accès en lecture limité à un fichier peut être accordé à l’application choisie pour ouvrir ou partager ce fichier.
+
+## Partage
+
+Pas d’envoi automatique vers une IA ou un serveur. Le partage Android exige une action utilisateur ; le destinataire choisi peut conserver sa propre copie. Les exports contiennent des données de santé et des horodatages.
 
 ## Suppression
 
-Le modèle morphologique et Adaptive Twin disposent de remises à zéro indépendantes. Les rapports, ECG bruts et résumés de sessions peuvent être effacés ensemble depuis l’application. La désinstallation supprime le stockage privé de l’application.
+- Suppression d’un rapport : retire ses fichiers et son entrée ; conserve l’exemple annoté utilisé par le modèle.
+- Effacement global de l’historique, surveillance arrêtée : retire rapports, signaux continus, sessions, bilans et journal. Le profil personnel et les exemples morphologiques sont conservés.
+- Réinitialisation du modèle ECG : retire sa référence et ses annotations d’apprentissage.
+- Réinitialisation du suivi de forme : retire profil, bilans, journal, coefficients et prévisions ; conserve les ECG et rapports.
+- Désinstallation : retire les données privées, mais pas nécessairement les fichiers déjà exportés dans Documents ou partagés à un tiers.
+
+Les suppressions logiques ne constituent pas un effacement cryptographique du support. Android gère la protection du stockage et les accès système ; aucune garantie d’inviolabilité n’est revendiquée.
 
 Auteur et responsable du projet : Mattéo Leroy.

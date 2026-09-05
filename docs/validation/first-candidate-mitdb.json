@@ -1,0 +1,1070 @@
+{
+  "experimental": true,
+  "claim": "No clinical or H10 validation. Previously inspected non-blind regression cohort. Probabilities are forest votes, not calibrated diagnostic certainty.",
+  "training_records": [
+    "101",
+    "106",
+    "108",
+    "109",
+    "112",
+    "114",
+    "115",
+    "116",
+    "118",
+    "119",
+    "122",
+    "124",
+    "201",
+    "203",
+    "205",
+    "207",
+    "208",
+    "209",
+    "215",
+    "220",
+    "223",
+    "230"
+  ],
+  "evaluation_records": [
+    "100",
+    "103",
+    "105",
+    "111",
+    "113",
+    "117",
+    "121",
+    "123",
+    "200",
+    "210",
+    "212",
+    "213",
+    "214",
+    "219",
+    "221",
+    "222",
+    "228",
+    "231",
+    "232",
+    "233",
+    "234"
+  ],
+  "excluded": [
+    "102",
+    "104",
+    "107",
+    "202",
+    "217"
+  ],
+  "bytes": 39850,
+  "model_sha256": "b843b449f3eb6accca89fa9cd8f0b81aa7316a14a8030c1fff1980a5b23af6c2",
+  "parameters": {
+    "bootstrap": true,
+    "ccp_alpha": 0,
+    "class_weight": "balanced_subsample",
+    "criterion": "gini",
+    "max_depth": 7,
+    "max_features": 0.6,
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0,
+    "min_samples_leaf": 15,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0,
+    "monotonic_cst": null,
+    "n_estimators": 16,
+    "n_jobs": 2,
+    "oob_score": false,
+    "random_state": 20260905,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "decision_threshold": 0.85,
+  "decision_margin": 0.25,
+  "totals": {
+    "V": {
+      "tp": 1928,
+      "fp": 25,
+      "fn": 1221,
+      "sensitivity": 0.6122578596379803,
+      "ppv": 0.9871991807475679
+    },
+    "S": {
+      "tp": 52,
+      "fp": 632,
+      "fn": 1707,
+      "sensitivity": 0.029562251279135872,
+      "ppv": 0.07602339181286549
+    }
+  },
+  "records": [
+    {
+      "record": "100",
+      "coverage": 0.9847738468428123,
+      "matrix_N_V_S_unmatched": [
+        [
+          2199,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          32,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "sensitivity": 0,
+        "ppv": null
+      },
+      "S": {
+        "tp": 19,
+        "fp": 0,
+        "fn": 13,
+        "sensitivity": 0.59375,
+        "ppv": 1
+      }
+    },
+    {
+      "record": "103",
+      "coverage": 0.97705078125,
+      "matrix_N_V_S_unmatched": [
+        [
+          2030,
+          0,
+          16,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      },
+      "S": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "sensitivity": 0.5,
+        "ppv": 1
+      }
+    },
+    {
+      "record": "105",
+      "coverage": 0.8218761868590961,
+      "matrix_N_V_S_unmatched": [
+        [
+          2313,
+          67,
+          14,
+          82
+        ],
+        [
+          18,
+          16,
+          3,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          37,
+          0,
+          76
+        ]
+      ],
+      "V": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 38,
+        "sensitivity": 0.02564102564102564,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      }
+    },
+    {
+      "record": "111",
+      "coverage": 0.42741208295761945,
+      "matrix_N_V_S_unmatched": [
+        [
+          1781,
+          203,
+          4,
+          97
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          64,
+          9,
+          59
+        ]
+      ],
+      "V": {
+        "tp": 1,
+        "fp": 13,
+        "fn": 0,
+        "sensitivity": 1,
+        "ppv": 0.07142857142857142
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      }
+    },
+    {
+      "record": "113",
+      "coverage": 0.7810492505353319,
+      "matrix_N_V_S_unmatched": [
+        [
+          1465,
+          0,
+          293,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          0,
+          102,
+          0,
+          4
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      },
+      "S": {
+        "tp": 0,
+        "fp": 135,
+        "fn": 5,
+        "sensitivity": 0,
+        "ppv": 0
+      }
+    },
+    {
+      "record": "117",
+      "coverage": 0.24453280318091453,
+      "matrix_N_V_S_unmatched": [
+        [
+          1443,
+          57,
+          5,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "sensitivity": 0,
+        "ppv": null
+      }
+    },
+    {
+      "record": "121",
+      "coverage": 0.921311475409836,
+      "matrix_N_V_S_unmatched": [
+        [
+          1820,
+          5,
+          0,
+          2
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": 1,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "sensitivity": 0,
+        "ppv": null
+      }
+    },
+    {
+      "record": "123",
+      "coverage": 0.8552278820375335,
+      "matrix_N_V_S_unmatched": [
+        [
+          1300,
+          0,
+          189,
+          0
+        ],
+        [
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 2,
+        "sensitivity": 0.3333333333333333,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 0,
+        "fp": 105,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": 0
+      }
+    },
+    {
+      "record": "200",
+      "coverage": 0.8015625,
+      "matrix_N_V_S_unmatched": [
+        [
+          1633,
+          6,
+          70,
+          3
+        ],
+        [
+          7,
+          787,
+          7,
+          8
+        ],
+        [
+          5,
+          0,
+          25,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          2
+        ]
+      ],
+      "V": {
+        "tp": 625,
+        "fp": 0,
+        "fn": 185,
+        "sensitivity": 0.7716049382716049,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 5,
+        "fp": 3,
+        "fn": 25,
+        "sensitivity": 0.16666666666666666,
+        "ppv": 0.625
+      }
+    },
+    {
+      "record": "210",
+      "coverage": 0.3585122699386503,
+      "matrix_N_V_S_unmatched": [
+        [
+          2017,
+          23,
+          336,
+          3
+        ],
+        [
+          4,
+          182,
+          2,
+          3
+        ],
+        [
+          10,
+          4,
+          6,
+          0
+        ],
+        [
+          0,
+          3,
+          0,
+          7
+        ]
+      ],
+      "V": {
+        "tp": 123,
+        "fp": 1,
+        "fn": 68,
+        "sensitivity": 0.643979057591623,
+        "ppv": 0.9919354838709677
+      },
+      "S": {
+        "tp": 1,
+        "fp": 22,
+        "fn": 21,
+        "sensitivity": 0.045454545454545456,
+        "ppv": 0.043478260869565216
+      }
+    },
+    {
+      "record": "212",
+      "coverage": 0.6164383561643836,
+      "matrix_N_V_S_unmatched": [
+        [
+          2682,
+          7,
+          8,
+          3
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      }
+    },
+    {
+      "record": "213",
+      "coverage": 0.48903508771929827,
+      "matrix_N_V_S_unmatched": [
+        [
+          2579,
+          0,
+          3,
+          0
+        ],
+        [
+          2,
+          217,
+          0,
+          1
+        ],
+        [
+          1,
+          3,
+          24,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 19,
+        "fp": 2,
+        "fn": 201,
+        "sensitivity": 0.08636363636363636,
+        "ppv": 0.9047619047619048
+      },
+      "S": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 21,
+        "sensitivity": 0.25,
+        "ppv": 1
+      }
+    },
+    {
+      "record": "214",
+      "coverage": 0.043146067415730335,
+      "matrix_N_V_S_unmatched": [
+        [
+          717,
+          1236,
+          11,
+          0
+        ],
+        [
+          3,
+          221,
+          26,
+          3
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          5
+        ]
+      ],
+      "V": {
+        "tp": 52,
+        "fp": 0,
+        "fn": 202,
+        "sensitivity": 0.2047244094488189,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 0,
+        "fp": 3,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": 0
+      }
+    },
+    {
+      "record": "219",
+      "coverage": 0.6167296786389413,
+      "matrix_N_V_S_unmatched": [
+        [
+          1505,
+          5,
+          534,
+          0
+        ],
+        [
+          0,
+          60,
+          0,
+          4
+        ],
+        [
+          2,
+          0,
+          5,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 27,
+        "fp": 0,
+        "fn": 37,
+        "sensitivity": 0.421875,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 2,
+        "fp": 267,
+        "fn": 5,
+        "sensitivity": 0.2857142857142857,
+        "ppv": 0.007434944237918215
+      }
+    },
+    {
+      "record": "221",
+      "coverage": 0.6313594662218516,
+      "matrix_N_V_S_unmatched": [
+        [
+          1647,
+          0,
+          350,
+          0
+        ],
+        [
+          0,
+          385,
+          2,
+          3
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          11
+        ]
+      ],
+      "V": {
+        "tp": 263,
+        "fp": 0,
+        "fn": 127,
+        "sensitivity": 0.6743589743589744,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 0,
+        "fp": 88,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": 0
+      }
+    },
+    {
+      "record": "222",
+      "coverage": 0.281097331830139,
+      "matrix_N_V_S_unmatched": [
+        [
+          1449,
+          101,
+          498,
+          124
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          16,
+          17,
+          162,
+          13
+        ],
+        [
+          3,
+          155,
+          0,
+          123
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 4,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": 0
+      },
+      "S": {
+        "tp": 6,
+        "fp": 5,
+        "fn": 203,
+        "sensitivity": 0.028708133971291867,
+        "ppv": 0.5454545454545454
+      }
+    },
+    {
+      "record": "228",
+      "coverage": 0.6415558838010832,
+      "matrix_N_V_S_unmatched": [
+        [
+          1556,
+          8,
+          79,
+          13
+        ],
+        [
+          0,
+          340,
+          12,
+          1
+        ],
+        [
+          0,
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          8,
+          1,
+          10
+        ]
+      ],
+      "V": {
+        "tp": 208,
+        "fp": 0,
+        "fn": 145,
+        "sensitivity": 0.5892351274787535,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 2,
+        "fp": 2,
+        "fn": 1,
+        "sensitivity": 0.6666666666666666,
+        "ppv": 0.5
+      }
+    },
+    {
+      "record": "231",
+      "coverage": 0.7379713914174252,
+      "matrix_N_V_S_unmatched": [
+        [
+          1508,
+          24,
+          3,
+          0
+        ],
+        [
+          0,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "sensitivity": 0,
+        "ppv": null
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "sensitivity": 0,
+        "ppv": null
+      }
+    },
+    {
+      "record": "232",
+      "coverage": 0.7079347214406303,
+      "matrix_N_V_S_unmatched": [
+        [
+          357,
+          26,
+          2,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1291,
+          51,
+          8,
+          12
+        ],
+        [
+          1,
+          14,
+          0,
+          13
+        ]
+      ],
+      "V": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": null,
+        "ppv": null
+      },
+      "S": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1363,
+        "sensitivity": 0,
+        "ppv": null
+      }
+    },
+    {
+      "record": "233",
+      "coverage": 0.8265036351619299,
+      "matrix_N_V_S_unmatched": [
+        [
+          2186,
+          3,
+          2,
+          1
+        ],
+        [
+          0,
+          812,
+          0,
+          5
+        ],
+        [
+          0,
+          1,
+          4,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 604,
+        "fp": 5,
+        "fn": 213,
+        "sensitivity": 0.7392900856793145,
+        "ppv": 0.9917898193760263
+      },
+      "S": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 3,
+        "sensitivity": 0.4,
+        "ppv": 0.6666666666666666
+      }
+    },
+    {
+      "record": "234",
+      "coverage": 0.9841035120147874,
+      "matrix_N_V_S_unmatched": [
+        [
+          2649,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          29,
+          0,
+          21,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "V": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "sensitivity": 1,
+        "ppv": 1
+      },
+      "S": {
+        "tp": 7,
+        "fp": 1,
+        "fn": 43,
+        "sensitivity": 0.14,
+        "ppv": 0.875
+      }
+    }
+  ],
+  "source_sha256": {
+    "100": "b2ea3c250e56e48f4b7b90697832b8ecd1afa1e0bb31f2dcfea4ed6e1075a639",
+    "101": "698d1ea6f472d23ca50317c72c96cda2698badd8578220ed0380cdf241e39006",
+    "103": "f7994f0bd196730779998b4bddf26cb47f396599fb370a08b5cb29a3ac4d555d",
+    "105": "fcd0153dfea69c749194bb73de7db124588857cfa2f6aecb72754894c8afde02",
+    "106": "c017bc18b95b1f970bca143a044ee5d54168648b541e47aa656f2737a59c1202",
+    "108": "229a4ef62679dc5c6ea781bfbaec2bd784151fc9f9517f4cdecd533a9431eb20",
+    "109": "267afd6ced7a1fd5a8bcd21fcc2b83287e37e3ef57f32e8a0fe39a6e021951cd",
+    "111": "8372d98ae59fbfd023502a9d0fc03fb5383083da92584b964484e18593e08485",
+    "112": "3c7af9758687314255b5d946a58d9509d53ecf2a300230684fa8ecf00b774bdb",
+    "113": "f5509b71dabaaa11c53f687ee17aab0071bce3d471e2ab77c71a6434f5b7aacf",
+    "114": "2ae83463edcfec256b79ce93716dcb40f289bacbe9e5e7a66cd00d0a31099d4b",
+    "115": "34185efe9889608c76ebfbf5a467d3457970c6d11b77a2bf81b94bcf46e07c41",
+    "116": "0ab38cfca76d816673213dcd570504bb3ab02ef76d51540fd7a6075bc580ad85",
+    "117": "2ce7de6f20baf4cfef0369f9a13fa53784d18e2da78c11afa1e4c55e8ad1900e",
+    "118": "66ea4b70b7d64abd0f49089ae1b8f0f577664c46e5b29ac23b291934e063df15",
+    "119": "02a286a28e69b441568add915f16a2856b22bab893bf8729ee9654411ed3a5aa",
+    "121": "679f374a7b2557fed04a4bc5648301ce9bdd38e5a4f13b2e63ebbcf7cb3fb482",
+    "122": "a700c794bfe23565603d75dc5706915f5436e522802d260e758683d11f5b9e13",
+    "123": "8a685a846b82d72aac4dd86171ad0fe5b19c0bd9ce51ddc1e6f015f73b2d8c3a",
+    "124": "296988e49d2653eb499ad0b17c46826b4296b7eaf94df3f76f1ba2dcdf6bc48b",
+    "200": "a9e203b3807b9fcd3647cde03444437cb8eec7f5128a8eb413edafb394272e0f",
+    "201": "16610ae46eff900794597503d15af4572a8b1518f18dbed2843b7e68c81f3898",
+    "203": "5ba7d2237fc838438efd8bb0a3baeffc5de2e70c76e3ab7e401e811ad82f43e0",
+    "205": "8a513c39e6d9a1d732de0b3909a87aa1fcfd4bd55ab5f59a5b810967d252af36",
+    "207": "139f99250366fbf347cba4d8ea1fbe788f98cb1b93b70f50ccba70122d908605",
+    "208": "22873623623c44ee413a5b60cacb15d4af2723734836fb3ae45d9ff96bdb36e7",
+    "209": "e2516dd126ea85529d9a0e8442fef5d880a492d41f0692a76e648c8437f15c5f",
+    "210": "76e971fba03c0ae2ab261c7446240987ecde82f45dad1d4f36e290b950eb464b",
+    "212": "6b63d3e20c40073be852e8121196d5de2ede502168fcb6c10ca5af841418cc5c",
+    "213": "0cb13cd9299b0ab68f8f3064b2ab72f853d155abb277b68daef0a26cbc173b0d",
+    "214": "a886b1ceb56e950858dedf5b56d3fdb5f26aef3667f8effcb880c1c000ee0cd3",
+    "215": "9e28799b5733a2d60470653e6f6ca26610143303233a1b7559cff54e2ad26ef9",
+    "219": "7fc27b77e313aaa40da9f39783f8fb29a6a910be148e67463e5093793644751a",
+    "220": "c01ca1a76fb3a89e96134a08f2e5aa6e760eda59ea9086ba8aaa13ba0cca9cff",
+    "221": "274d17c6a35f7adcbb10a59ea34350e5ad299c2d69e4fa579d8863213e1fe9ae",
+    "222": "0510bf39ed2925a83debd249492bdfe77c575148376aaabeba4c7b7a2451ac5d",
+    "223": "1d42aa9e13f7349287ae5f0f00b40078c01aadd39e2cad1001ab42d3b7484594",
+    "228": "b2421f15447772bb7a38f5073e4e07d5d9be50d875441a4a0821c9e22b78fdac",
+    "230": "fba09ea54d9caa342c54c46e0df247335345b02444f7d15162906adfef55d057",
+    "231": "7d4f56d6c4b1d50322154381c1d8761457c2f2696973e915a3c19d8a5b789595",
+    "232": "3d74a21f848766c9607bc5eead7e4b2655f09586adb5561f02fd8fcb0e9da6d0",
+    "233": "6ccd6b1fa0cafc052369e7ec0a99cc6c3b56b3c12afff26db800c55a826211b4",
+    "234": "89f826307bfc91a554021da87c17b88b843ed3d26aa9ea237fc6f7c8af00da6d"
+  }
+}

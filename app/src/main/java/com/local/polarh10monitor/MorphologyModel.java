@@ -7,6 +7,9 @@ public final class MorphologyModel {
     public static final int DIMENSIONS = 16;
     public static final int BASELINE_TARGET = 500;
 
+    private final java.util.ArrayList<float[]> artifactBank=new java.util.ArrayList<>(),anomalyBank=new java.util.ArrayList<>();
+    private static void remember(java.util.ArrayList<float[]> bank,float[] v){if(bank.size()<64)bank.add(v.clone());}
+    private static double nearest(float[] v,java.util.ArrayList<float[]> bank,double fallback){double best=bank.isEmpty()?fallback:Double.MAX_VALUE;for(float[] item:bank){double sum=0;for(int i=0;i<v.length;i++)sum+=Math.pow(v[i]-item[i],2);best=Math.min(best,Math.sqrt(sum/v.length));}return best;}
     private int normalCount;
     private int confirmedCount;
     private int artifactCount;
@@ -32,20 +35,20 @@ public final class MorphologyModel {
 
     public synchronized void confirmAnomaly(float[] vector) {
         if (!valid(vector)) return;
-        confirmedCount++;
+        remember(anomalyBank,vector);confirmedCount++;
         addToMean(vector, confirmedMean, confirmedCount);
     }
 
     /** Les exemples marqués comme artefacts forment un prototype séparé et ne polluent jamais la baseline sinusale. */
     public synchronized void confirmArtifact(float[] vector) {
         if (!valid(vector)) return;
-        artifactCount++;
+        remember(artifactBank,vector);artifactCount++;
         addToMean(vector, artifactMean, artifactCount);
     }
 
     /** Reconstruit les exemples utilisateurs depuis l'historique afin qu'une annotation soit unique et réversible. */
     public synchronized void clearFeedback() {
-        confirmedCount = artifactCount = reviewedNormalCount = 0;
+        confirmedCount = artifactCount = reviewedNormalCount = 0;artifactBank.clear();anomalyBank.clear();
         for (int i = 0; i < DIMENSIONS; i++) {
             confirmedMean[i] = artifactMean[i] = reviewedNormalMean[i] = 0;
         }
@@ -72,9 +75,9 @@ public final class MorphologyModel {
         double score = distance(vector, normalMean);
         boolean ready = isReady();
         boolean anomaly = ready && score > threshold();
-        boolean artifact = false;
+        boolean artifact = false,ambiguous=false;
         if (ready && confirmedCount > 0) {
-            double positiveDistance = distance(vector, confirmedMean);
+            double positiveDistance = nearest(vector,anomalyBank,distance(vector, confirmedMean));
             double normalDistance = Math.max(1e-6, score);
             anomaly = anomaly || positiveDistance < normalDistance * 0.88;
         }
@@ -83,12 +86,13 @@ public final class MorphologyModel {
             if (reviewedNormalDistance < Math.max(0.08, score * 0.86)) anomaly = false;
         }
         if (artifactCount > 0) {
-            double artifactDistance = distance(vector, artifactMean);
+            double artifactDistance = nearest(vector,artifactBank,distance(vector, artifactMean));
             double reviewedNormalDistance = reviewedNormalCount > 0 ? distance(vector, reviewedNormalMean) : Double.MAX_VALUE;
-            artifact = artifactDistance < Math.max(0.08, score * 0.82) && artifactDistance < reviewedNormalDistance * 0.92;
+            artifact = score>threshold()*.65 && artifactDistance < Math.max(0.08, score * 0.82) && artifactDistance < reviewedNormalDistance * 0.92;
+            if(artifact&&confirmedCount>0){double positiveDistance=nearest(vector,anomalyBank,distance(vector,confirmedMean));ambiguous=positiveDistance<Math.max(.08,artifactDistance*1.2);if(ambiguous)artifact=false;}
             if (artifact) anomaly = false;
         }
-        return new Result(score, threshold(), ready, anomaly, artifact, confirmedCount > 0, artifactCount > 0);
+        return new Result(score, threshold(), ready, anomaly, artifact, confirmedCount > 0, artifactCount > 0,ambiguous);
     }
 
     public synchronized boolean isReady() { return normalCount >= BASELINE_TARGET; }
@@ -103,7 +107,7 @@ public final class MorphologyModel {
     }
 
     public synchronized void reset() {
-        normalCount = confirmedCount = artifactCount = reviewedNormalCount = 0;
+        normalCount = confirmedCount = artifactCount = reviewedNormalCount = 0;artifactBank.clear();anomalyBank.clear();
         distanceMean = distanceM2 = 0;
         for (int i = 0; i < DIMENSIONS; i++) {
             normalMean[i] = normalM2[i] = confirmedMean[i] = artifactMean[i] = reviewedNormalMean[i] = 0;
@@ -114,7 +118,7 @@ public final class MorphologyModel {
         return normalCount + "|" + confirmedCount + "|" + format(distanceMean) + "|" + format(distanceM2)
                 + "|" + join(normalMean) + "|" + join(normalM2) + "|" + join(confirmedMean)
                 + "|" + artifactCount + "|" + join(artifactMean)
-                + "|" + reviewedNormalCount + "|" + join(reviewedNormalMean);
+                + "|" + reviewedNormalCount + "|" + join(reviewedNormalMean) + "|" + joinBank(artifactBank) + "|" + joinBank(anomalyBank);
     }
 
     public static MorphologyModel deserialize(String encoded) {
@@ -122,7 +126,7 @@ public final class MorphologyModel {
         if (encoded == null || encoded.isEmpty()) return model;
         try {
             String[] parts = encoded.split("\\|", -1);
-            if (parts.length != 7 && parts.length != 9 && parts.length != 11) return model;
+            if (parts.length != 7 && parts.length != 9 && parts.length != 11 && parts.length != 13) return model;
             model.normalCount = Math.max(0, Integer.parseInt(parts[0]));
             model.confirmedCount = Math.max(0, Integer.parseInt(parts[1]));
             model.distanceMean = Double.parseDouble(parts[2]);
@@ -134,12 +138,14 @@ public final class MorphologyModel {
                 model.artifactCount = Math.max(0, Integer.parseInt(parts[7]));
                 parse(parts[8], model.artifactMean);
             }
-            if (parts.length == 11) {
+            if (parts.length >= 11) {
                 model.artifactCount = Math.max(0, Integer.parseInt(parts[7]));
                 parse(parts[8], model.artifactMean);
                 model.reviewedNormalCount = Math.max(0, Integer.parseInt(parts[9]));
                 parse(parts[10], model.reviewedNormalMean);
             }
+            if(parts.length==13){parseBank(parts[11],model.artifactBank);parseBank(parts[12],model.anomalyBank);}
+            if(!Double.isFinite(model.distanceMean)||!Double.isFinite(model.distanceM2))throw new IllegalArgumentException("non-finite");
         } catch (RuntimeException ignored) {
             model.reset();
         }
@@ -177,9 +183,11 @@ public final class MorphologyModel {
     private static void parse(String encoded, double[] target) {
         String[] values = encoded.split(",", -1);
         if (values.length != target.length) throw new IllegalArgumentException("dimensions");
-        for (int i = 0; i < target.length; i++) target[i] = Double.parseDouble(values[i]);
+        for (int i = 0; i < target.length; i++) {target[i] = Double.parseDouble(values[i]);if(!Double.isFinite(target[i]))throw new IllegalArgumentException("non-finite");}
     }
 
+    private static String joinBank(java.util.ArrayList<float[]> bank){StringBuilder b=new StringBuilder();for(float[] v:bank){if(b.length()>0)b.append(';');double[] a=new double[v.length];for(int i=0;i<v.length;i++)a[i]=v[i];b.append(join(a));}return b.toString();}
+    private static void parseBank(String s,java.util.ArrayList<float[]> bank){if(s.isEmpty())return;String[] rows=s.split(";");if(rows.length>64)throw new IllegalArgumentException("bank");for(String row:rows){double[] a=new double[DIMENSIONS];parse(row,a);float[] v=new float[DIMENSIONS];for(int i=0;i<v.length;i++)v[i]=(float)a[i];if(!valid(v))throw new IllegalArgumentException("vector");bank.add(v);}}
     private static String format(double value) { return String.format(Locale.ROOT, "%.10g", value); }
     private static double clamp(double value, double min, double max) { return Math.max(min, Math.min(max, value)); }
 
@@ -191,9 +199,14 @@ public final class MorphologyModel {
         public final boolean artifact;
         public final boolean fewShotReady;
         public final boolean artifactReady;
+        public final boolean ambiguous;
 
         Result(double score, double threshold, boolean ready, boolean anomaly, boolean artifact,
                boolean fewShotReady, boolean artifactReady) {
+            this(score,threshold,ready,anomaly,artifact,fewShotReady,artifactReady,false);
+        }
+        Result(double score,double threshold,boolean ready,boolean anomaly,boolean artifact,boolean fewShotReady,boolean artifactReady,boolean ambiguous){
+            this.ambiguous=ambiguous;
             this.score = score;
             this.threshold = threshold;
             this.ready = ready;
